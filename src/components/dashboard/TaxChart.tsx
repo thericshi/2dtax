@@ -1,19 +1,29 @@
 import React, { useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { TaxInputs, TaxResult } from '../../utils/TaxLogic';
+import { ProgressionStep } from '../../hooks/useTaxData';
 
-export default function TaxChart({ progressionData, inputs, results }) {
-  const [chartMode, setChartMode] = useState('marginal');
+interface TaxChartProps {
+  progressionData: ProgressionStep[];
+  inputs: TaxInputs;
+  results: TaxResult;
+}
+
+type ChartMode = 'effective' | 'marginal' | 'tax';
+
+export default function TaxChart({ progressionData, inputs, results }: TaxChartProps) {
+  const [chartMode, setChartMode] = useState<ChartMode>('marginal');
   const [showDiff, setShowDiff] = useState(true);
 
   const activeDataKey = chartMode === 'tax' ? 'tax' : chartMode === 'effective' ? 'effectiveRate' : (showDiff ? 'marginalPaid' : 'marginalRateActual');
   const activeDiffKey = chartMode === 'tax' ? 'taxDiff' : chartMode === 'effective' ? 'effectiveRateDiff' : 'marginalSaved';
 
-  const CustomTooltip = ({ active, payload, label }) => {
+  const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const actualVal = payload[0].value;
       const diffVal = payload.length > 1 ? payload[1].value : 0;
       const totalBaseVal = actualVal + diffVal;
-      const formatVal = (v) => chartMode === 'tax' ? `$${Math.round(v).toLocaleString()}` : `${v.toFixed(1)}%`;
+      const formatVal = (v: number) => chartMode === 'tax' ? `$${Math.round(v).toLocaleString()}` : `${v.toFixed(1)}%`;
 
       return (
         <div className="bg-[#0f172a]/95 border border-white/10 p-5 shadow-2xl rounded-2xl backdrop-blur-xl min-w-[200px]">
@@ -106,13 +116,13 @@ export default function TaxChart({ progressionData, inputs, results }) {
              </defs>
              <XAxis 
                type="number" domain={[0, 'dataMax']} dataKey="income" 
-               tickFormatter={(val) => `$${Math.round(val/1000)}k`} 
+               tickFormatter={(val: number) => `$${Math.round(val/1000)}k`} 
                stroke="#ffffff" opacity={0.2} 
                tick={{ fill: '#ffffff', fontWeight: 'bold', fontSize: 11, opacity: 0.5 }}
                axisLine={false} tickLine={false} dy={10} tickCount={8}
              />
              <YAxis 
-               tickFormatter={(val) => chartMode === 'tax' ? `$${val >= 1000 ? Math.round(val/1000) + 'k' : val}` : `${val}%`} 
+               tickFormatter={(val: number) => chartMode === 'tax' ? `$${val >= 1000 ? Math.round(val/1000) + 'k' : val}` : `${val}%`} 
                stroke="#ffffff" opacity={0.2} 
                tick={{ fill: '#ffffff', fontWeight: 'bold', fontSize: 11, opacity: 0.5 }}
                axisLine={false} tickLine={false} dx={-5}

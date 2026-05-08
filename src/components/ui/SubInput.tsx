@@ -1,6 +1,13 @@
 import React from 'react';
 
-export default function SubInput({ label, value, onChange, icon }) {
+interface SubInputProps {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+  icon?: React.ReactNode;
+}
+
+export default function SubInput({ label, value, onChange, icon }: SubInputProps) {
   return (
     <div className="flex flex-col gap-1.5 bg-black/20 p-3.5 rounded-2xl border border-white/[0.05] focus-within:border-white/20 focus-within:bg-white/[0.02] transition-all">
       <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-1">

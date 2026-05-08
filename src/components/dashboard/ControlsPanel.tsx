@@ -1,7 +1,15 @@
 import React from 'react';
 import SubInput from '../ui/SubInput';
+import { TaxInputs, ProvinceCode } from '../../utils/TaxLogic';
 
-export default function ControlsPanel({ inputs, updateInput, province, setProvince }) {
+interface ControlsPanelProps {
+  inputs: TaxInputs;
+  updateInput: (key: keyof TaxInputs, value: number) => void;
+  province: ProvinceCode;
+  setProvince: (prov: ProvinceCode) => void;
+}
+
+export default function ControlsPanel({ inputs, updateInput, province, setProvince }: ControlsPanelProps) {
   return (
     <div className="bg-white/[0.02] backdrop-blur-xl rounded-[2rem] p-6 md:p-8 shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-white/[0.08] space-y-10">
       
@@ -50,7 +58,7 @@ export default function ControlsPanel({ inputs, updateInput, province, setProvin
       <div className="space-y-4">
         <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Jurisdiction</label>
         <div className="flex p-1.5 bg-black/20 rounded-2xl border border-white/[0.05]">
-          {['ON', 'BC'].map(p => (
+          {(['ON', 'BC'] as ProvinceCode[]).map(p => (
             <button
               key={p}
               onClick={() => setProvince(p)}

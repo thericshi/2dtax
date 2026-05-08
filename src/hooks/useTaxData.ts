@@ -1,10 +1,32 @@
 import { useMemo } from 'react';
-import { calculateTax } from '../utils/TaxLogic';
+import { calculateTax, TaxInputs, ProvinceCode, TaxResult } from '../utils/TaxLogic';
 
-export function useTaxData(inputs, province) {
-  const results = useMemo(() => calculateTax(inputs, province), [inputs, province]);
+export interface Percentages {
+  fedPct: number;
+  provPct: number;
+  rrspPct: number;
+  fhsaPct: number;
+  cashPct: number;
+  totalRetainedPct: number;
+  cashTakeHome: number;
+}
 
-  const percentages = useMemo(() => {
+export interface ProgressionStep {
+  income: number;
+  effectiveRate: number;
+  effectiveRateDiff: number;
+  marginalRateActual: number;
+  marginalPaid: number;
+  marginalSaved: number;
+  tax: number;
+  taxDiff: number;
+  baseMarginalRate: number;
+}
+
+export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
+  const results: TaxResult = useMemo(() => calculateTax(inputs, province), [inputs, province]);
+
+  const percentages: Percentages = useMemo(() => {
     const safeIncome = results.totalGrossIncome || 1;
     const cashTakeHome = Math.max(0, results.takeHome - inputs.rrsp - inputs.fhsa);
 
@@ -19,8 +41,8 @@ export function useTaxData(inputs, province) {
     };
   }, [inputs, results]);
 
-  const progressionData = useMemo(() => {
-    const data = [];
+  const progressionData: ProgressionStep[] = useMemo(() => {
+    const data: ProgressionStep[] = [];
     const maxVal = results.totalGrossIncome || 0;
     const taxableIncome = Math.max(0, maxVal - inputs.rrsp - inputs.fhsa);
     
@@ -33,9 +55,9 @@ export function useTaxData(inputs, province) {
       }];
     }
 
-    const calculateStep = (incomeAmount, forceSaved = false) => {
+    const calculateStep = (incomeAmount: number, forceSaved: boolean = false): ProgressionStep => {
       const ratio = incomeAmount / maxVal;
-      const simInputs = {
+      const simInputs: TaxInputs = {
         employment: inputs.employment * ratio,
         capitalGains: inputs.capitalGains * ratio,
         eligibleDividends: inputs.eligibleDividends * ratio,
@@ -70,7 +92,7 @@ export function useTaxData(inputs, province) {
       };
     };
 
-    const stepSet = new Set([0]);
+    const stepSet = new Set<number>([0]);
     for (let i = 10000; i < maxVal; i += 10000) stepSet.add(i);
     stepSet.add(maxVal);
     

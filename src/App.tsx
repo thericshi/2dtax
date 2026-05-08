@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useTaxData } from './hooks/useTaxData';
+import { TaxInputs, ProvinceCode } from './utils/TaxLogic';
 import ControlsPanel from './components/dashboard/ControlsPanel';
 import SummaryCard from './components/dashboard/SummaryCard';
 import TaxChart from './components/dashboard/TaxChart';
 
 export default function App() {
-  const [province, setProvince] = useState('ON');
-  const [inputs, setInputs] = useState({
+  const [province, setProvince] = useState<ProvinceCode>('ON');
+  const [inputs, setInputs] = useState<TaxInputs>({
     employment: 90000,
     capitalGains: 0,
     eligibleDividends: 0,
@@ -15,9 +16,8 @@ export default function App() {
     fhsa: 0
   });
 
-  const updateInput = (key, value) => setInputs(prev => ({ ...prev, [key]: value }));
+  const updateInput = (key: keyof TaxInputs, value: number) => setInputs(prev => ({ ...prev, [key]: value }));
 
-  // Abstracted business logic out of the component scope
   const { results, percentages, progressionData } = useTaxData(inputs, province);
 
   return (

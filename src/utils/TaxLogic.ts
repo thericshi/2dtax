@@ -1,4 +1,31 @@
-const FEDERAL_BRACKETS = [
+export type ProvinceCode = 'ON' | 'BC';
+
+export interface TaxInputs {
+  employment: number;
+  capitalGains: number;
+  eligibleDividends: number;
+  ineligibleDividends: number;
+  rrsp: number;
+  fhsa: number;
+}
+
+export interface TaxResult {
+  federal: number;
+  provincial: number;
+  totalTax: number;
+  takeHome: number;
+  effectiveRate: number;
+  totalGrossIncome: number;
+  taxableIncome: number;
+  marginalRate: number;
+}
+
+interface TaxBracket {
+  limit: number;
+  rate: number;
+}
+
+const FEDERAL_BRACKETS: TaxBracket[] = [
   { limit: 55867, rate: 0.15 },
   { limit: 111733, rate: 0.205 },
   { limit: 173205, rate: 0.26 },
@@ -6,7 +33,7 @@ const FEDERAL_BRACKETS = [
   { limit: Infinity, rate: 0.33 },
 ];
 
-const PROVINCIAL_DATA = {
+const PROVINCIAL_DATA: Record<ProvinceCode, { brackets: TaxBracket[], bpa: number, eligibleDTC: number, ineligibleDTC: number, hasSurtax?: boolean }> = {
   BC: {
     brackets: [
       { limit: 47937, rate: 0.0506 },
@@ -36,7 +63,7 @@ const PROVINCIAL_DATA = {
   }
 };
 
-const calculateProgressiveTax = (taxableAmount, brackets) => {
+const calculateProgressiveTax = (taxableAmount: number, brackets: TaxBracket[]): number => {
   let tax = 0;
   let previousLimit = 0;
 
@@ -49,7 +76,8 @@ const calculateProgressiveTax = (taxableAmount, brackets) => {
   return tax;
 };
 
-const calculateCoreTax = (inputs, provinceCode) => {
+// Internal function missing the marginal rate
+const calculateCoreTax = (inputs: TaxInputs, provinceCode: ProvinceCode): Omit<TaxResult, 'marginalRate'> => {
   const {
     employment = 0,
     capitalGains = 0,
@@ -116,7 +144,7 @@ const calculateCoreTax = (inputs, provinceCode) => {
   };
 };
 
-export const calculateTax = (inputs, provinceCode) => {
+export const calculateTax = (inputs: TaxInputs, provinceCode: ProvinceCode): TaxResult => {
   const baseResult = calculateCoreTax(inputs, provinceCode);
   const marginalInputs = { ...inputs, employment: (inputs.employment || 0) + 100 };
   const marginalResult = calculateCoreTax(marginalInputs, provinceCode);

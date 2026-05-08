@@ -1,7 +1,15 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { TaxInputs, TaxResult } from '../../utils/TaxLogic';
+import { Percentages } from '../../hooks/useTaxData';
 
-export default function SummaryCard({ inputs, results, percentages }) {
+interface SummaryCardProps {
+  inputs: TaxInputs;
+  results: TaxResult;
+  percentages: Percentages;
+}
+
+export default function SummaryCard({ inputs, results, percentages }: SummaryCardProps) {
   const { fedPct, provPct, rrspPct, fhsaPct, cashPct, totalRetainedPct, cashTakeHome } = percentages;
 
   return (
