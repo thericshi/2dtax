@@ -18,6 +18,8 @@ const PROVINCIAL_DATA = {
       { limit: Infinity, rate: 0.205 },
     ],
     bpa: 12580,
+    eligibleDTC: 0.12,
+    ineligibleDTC: 0.0196
   },
   ON: {
     brackets: [
@@ -29,44 +31,120 @@ const PROVINCIAL_DATA = {
     ],
     bpa: 12399,
     hasSurtax: true,
+    eligibleDTC: 0.10,
+    ineligibleDTC: 0.029863
   }
 };
 
-const calculateProgressiveTax = (income, brackets, bpa) => {
-  let taxableIncome = Math.max(0, income - bpa);
+// Accurately applies tiered progressive tax rates
+const calculateProgressiveTax = (taxableAmount, brackets) => {
   let tax = 0;
   let previousLimit = 0;
 
   for (const bracket of brackets) {
-    const amountInBracket = Math.min(taxableIncome, bracket.limit - previousLimit);
+    const amountInBracket = Math.max(0, Math.min(taxableAmount - previousLimit, bracket.limit - previousLimit));
     if (amountInBracket <= 0) break;
     tax += amountInBracket * bracket.rate;
-    taxableIncome -= amountInBracket;
     previousLimit = bracket.limit;
   }
   return tax;
 };
 
-export const calculateTax = (income, provinceCode) => {
-  const fedTax = calculateProgressiveTax(income, FEDERAL_BRACKETS, 15705);
-  const provData = PROVINCIAL_DATA[provinceCode];
-  let provTax = calculateProgressiveTax(income, provData.brackets, provData.bpa);
+// Internal function to calculate a single tax instance
+const calculateCoreTax = (inputs, provinceCode) => {
+  const {
+    employment = 0,
+    capitalGains = 0,
+    eligibleDividends = 0,
+    ineligibleDividends = 0,
+    rrsp = 0,
+    fhsa = 0
+  } = inputs;
 
+  // 1. Gross Incomes & Inclusions
+  const totalGrossIncome = employment + capitalGains + eligibleDividends + ineligibleDividends;
+
+  // Capital gains inclusion (Modern Rule: 50% up to 250k, 66.67% above)
+  let cgInclusion = 0;
+  if (capitalGains <= 250000) {
+    cgInclusion = capitalGains * 0.5;
+  } else {
+    cgInclusion = (250000 * 0.5) + ((capitalGains - 250000) * (2/3));
+  }
+
+  // Dividend Gross-ups
+  const grossedUpEligible = eligibleDividends * 1.38;
+  const grossedUpIneligible = ineligibleDividends * 1.15;
+
+  const totalDeductions = rrsp + fhsa;
+
+  // Calculate Net Taxable Income
+  let netIncomeForTax = employment + cgInclusion + grossedUpEligible + grossedUpIneligible - totalDeductions;
+  netIncomeForTax = Math.max(0, netIncomeForTax);
+
+  // 2. Federal Tax
+  const fedTaxBeforeCredits = calculateProgressiveTax(netIncomeForTax, FEDERAL_BRACKETS);
+  
+  const fedBpa = 15705; // 2024/2025 Simplified Basic Personal Amount
+  const fedBpaCredit = fedBpa * 0.15;
+  const fedEligibleDTC = grossedUpEligible * 0.150198;
+  const fedIneligibleDTC = grossedUpIneligible * 0.090301;
+  
+  const totalFedCredits = fedBpaCredit + fedEligibleDTC + fedIneligibleDTC;
+  const fedTax = Math.max(0, fedTaxBeforeCredits - totalFedCredits);
+
+  // 3. Provincial Tax
+  const provData = PROVINCIAL_DATA[provinceCode];
+  let provTaxBeforeCredits = calculateProgressiveTax(netIncomeForTax, provData.brackets);
+  
+  const provBpaCredit = provData.bpa * provData.brackets[0].rate;
+  const provEligibleDTC = grossedUpEligible * provData.eligibleDTC;
+  const provIneligibleDTC = grossedUpIneligible * provData.ineligibleDTC;
+
+  let provTax = Math.max(0, provTaxBeforeCredits - provBpaCredit - provEligibleDTC - provIneligibleDTC);
+
+  // Ontario Surtaxes & Health Premium
   if (provinceCode === 'ON') {
     let surtax = 0;
     if (provTax > 5500) surtax += (provTax - 5500) * 0.20;
     if (provTax > 7100) surtax += (provTax - 7100) * 0.36;
     provTax += surtax;
     
-    if (income > 20000) provTax += Math.min(900, (income - 20000) * 0.06);
+    // Ontario Health Premium (Simplified approximation)
+    if (netIncomeForTax > 20000) {
+      provTax += Math.min(900, (netIncomeForTax - 20000) * 0.06);
+    }
   }
 
   const totalTax = fedTax + provTax;
+  
+  // Effective Average Rate (Tax / Gross Income)
+  const effectiveRate = totalGrossIncome > 0 ? (totalTax / totalGrossIncome) * 100 : 0;
+
   return {
     federal: fedTax,
     provincial: provTax,
-    takeHome: income - totalTax,
-    totalTax,
-    marginalRate: (totalTax / income) * 100
+    totalTax: totalTax,
+    takeHome: totalGrossIncome - totalTax,
+    effectiveRate: isNaN(effectiveRate) ? 0 : effectiveRate,
+    totalGrossIncome,
+    taxableIncome: netIncomeForTax
+  };
+};
+
+export const calculateTax = (inputs, provinceCode) => {
+  const baseResult = calculateCoreTax(inputs, provinceCode);
+  
+  // Calculate true marginal rate by simulating an extra $100 of employment income.
+  // Because progressive tax is non-linear, measuring the exact delta avoids bracket-jumping errors.
+  const marginalInputs = { ...inputs, employment: (inputs.employment || 0) + 100 };
+  const marginalResult = calculateCoreTax(marginalInputs, provinceCode);
+  
+  // The change in tax on $100 equals the pure percentage rate.
+  const marginalRate = marginalResult.totalTax - baseResult.totalTax;
+
+  return {
+    ...baseResult,
+    marginalRate: Math.max(0, marginalRate)
   };
 };
