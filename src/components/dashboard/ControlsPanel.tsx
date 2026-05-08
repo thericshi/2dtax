@@ -10,6 +10,23 @@ interface ControlsPanelProps {
 }
 
 export default function ControlsPanel({ inputs, updateInput, province, setProvince }: ControlsPanelProps) {
+  
+  const PROVINCES: { code: ProvinceCode, name: string }[] = [
+    { code: 'AB', name: 'Alberta' },
+    { code: 'BC', name: 'British Columbia' },
+    { code: 'MB', name: 'Manitoba' },
+    { code: 'NB', name: 'New Brunswick' },
+    { code: 'NL', name: 'Newfoundland & Labrador' },
+    { code: 'NT', name: 'Northwest Territories' },
+    { code: 'NS', name: 'Nova Scotia' },
+    { code: 'NU', name: 'Nunavut' },
+    { code: 'ON', name: 'Ontario' },
+    { code: 'PE', name: 'Prince Edward Island' },
+    { code: 'QC', name: 'Quebec' },
+    { code: 'SK', name: 'Saskatchewan' },
+    { code: 'YT', name: 'Yukon' },
+  ];
+
   return (
     <div className="bg-white/[0.02] backdrop-blur-xl rounded-[2rem] p-6 md:p-8 shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-white/[0.08] space-y-10">
       
@@ -54,23 +71,27 @@ export default function ControlsPanel({ inputs, updateInput, province, setProvin
          </div>
       </div>
 
-      {/* Province Toggle */}
+      {/* Province Dropdown Selector */}
       <div className="space-y-4">
         <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Jurisdiction</label>
-        <div className="flex p-1.5 bg-black/20 rounded-2xl border border-white/[0.05]">
-          {(['ON', 'BC'] as ProvinceCode[]).map(p => (
-            <button
-              key={p}
-              onClick={() => setProvince(p)}
-              className={`flex-1 py-3.5 rounded-xl text-sm font-bold transition-all duration-300 ${
-                province === p
-                  ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)] border border-transparent'
-                  : 'text-white/40 hover:text-white/80'
-              }`}
-            >
-              {p === 'ON' ? 'Ontario' : 'British Columbia'}
-            </button>
-          ))}
+        <div className="relative">
+          <select
+            value={province}
+            onChange={(e) => setProvince(e.target.value as ProvinceCode)}
+            className="w-full bg-black/20 border border-white/[0.05] rounded-2xl py-4 pl-4 pr-10 text-sm font-bold text-white appearance-none outline-none focus:border-white/30 focus:ring-1 focus:ring-white/30 transition-all cursor-pointer backdrop-blur-md"
+          >
+            {PROVINCES.map((p) => (
+              <option key={p.code} value={p.code} className="bg-slate-900 text-white">
+                {p.name} ({p.code})
+              </option>
+            ))}
+          </select>
+          {/* Custom downward chevron for the select */}
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/40">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
         </div>
       </div>
     </div>

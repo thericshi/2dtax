@@ -29,10 +29,10 @@ export default function App() {
         <div className="absolute top-[40%] -right-[10%] w-[40%] h-[60%] rounded-full bg-emerald-600/5 blur-[120px]"></div>
       </div>
 
-      <div className="max-w-7xl w-full grid grid-cols-1 xl:grid-cols-12 gap-8 lg:gap-10 relative z-10">
+      <div className="max-w-[90rem] w-full grid grid-cols-1 xl:grid-cols-12 gap-8 lg:gap-10 relative z-10">
         
-        {/* Left Column: Interactive Controls */}
-        <div className="xl:col-span-5 flex flex-col justify-center space-y-8">
+        {/* Left Column: Interactive Controls (Narrowed to col-span-4) */}
+        <div className="xl:col-span-4 flex flex-col justify-center space-y-8">
           <div>
             <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white mb-3 drop-shadow-sm">
               Tax Planner
@@ -50,8 +50,8 @@ export default function App() {
           />
         </div>
 
-        {/* Right Column: Graphs & Data */}
-        <div className="xl:col-span-7 flex flex-col space-y-8">
+        {/* Right Column: Graphs & Data (Expanded to col-span-8) */}
+        <div className="xl:col-span-8 flex flex-col space-y-8">
           <SummaryCard 
             inputs={inputs} 
             results={results} 
