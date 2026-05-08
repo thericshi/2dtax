@@ -24,19 +24,23 @@ export interface ProgressionStep {
   baseMarginalRate: number;
 }
 
+export interface SavingsBreakdownItem {
+  category: string;
+  amount: number;
+  color: string;
+}
+
 export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
   const results: TaxResult = useMemo(() => calculateTax(inputs, province), [inputs, province]);
 
   const percentages: Percentages = useMemo(() => {
     const safeIncome = results.totalGrossIncome || 1;
-    // Base simulation without ANY registered accounts, deductions, or credits
     const baseTaxRes = calculateTax({ 
         ...inputs, 
         rrsp: 0, fhsa: 0, movingExpenses: 0, medicalExpenses: 0, tuition: 0, tuitionCarryForward: 0 
     }, province);
     const totalTaxSaved = Math.max(0, baseTaxRes.totalTax - results.totalTax);
     
-    // Liquid cash is total gross minus total tax minus registered account contributions
     const cashTakeHome = Math.max(0, results.takeHome - inputs.rrsp - inputs.fhsa);
 
     return {
@@ -50,6 +54,49 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
       totalTaxSaved
     };
   }, [inputs, results, province]);
+
+  // Isolate the tax savings of each individual item for the composition breakdown
+  const savingsBreakdown: SavingsBreakdownItem[] = useMemo(() => {
+    if (percentages.totalTaxSaved <= 0) return [];
+
+    const baseTax = results.totalTax;
+
+    const getImpact = (keys: (keyof TaxInputs)[]) => {
+      let hasValue = false;
+      const simInputs = { ...inputs };
+      keys.forEach(k => {
+         if (simInputs[k] > 0) {
+           hasValue = true;
+           simInputs[k] = 0;
+         }
+      });
+      if (!hasValue) return 0;
+      
+      const simRes = calculateTax(simInputs, province);
+      return Math.max(0, simRes.totalTax - baseTax);
+    };
+
+    const rrspImpact = getImpact(['rrsp']);
+    const fhsaImpact = getImpact(['fhsa']);
+    const movingImpact = getImpact(['movingExpenses']);
+    const medicalImpact = getImpact(['medicalExpenses']);
+    const tuitionImpact = getImpact(['tuition', 'tuitionCarryForward']);
+
+    const totalImpact = rrspImpact + fhsaImpact + movingImpact + medicalImpact + tuitionImpact;
+    if (totalImpact <= 0) return [];
+
+    // Normalize isolated impacts to perfectly match the true total tax saved
+    const factor = percentages.totalTaxSaved / totalImpact;
+
+    const breakdown: SavingsBreakdownItem[] = [];
+    if (rrspImpact > 0) breakdown.push({ category: 'RRSP', amount: rrspImpact * factor, color: '#34d399' });
+    if (fhsaImpact > 0) breakdown.push({ category: 'FHSA', amount: fhsaImpact * factor, color: '#10b981' });
+    if (movingImpact > 0) breakdown.push({ category: 'Moving Exp.', amount: movingImpact * factor, color: '#059669' });
+    if (medicalImpact > 0) breakdown.push({ category: 'Medical Exp.', amount: medicalImpact * factor, color: '#818cf8' });
+    if (tuitionImpact > 0) breakdown.push({ category: 'Tuition', amount: tuitionImpact * factor, color: '#6366f1' });
+
+    return breakdown.sort((a, b) => b.amount - a.amount);
+  }, [inputs, province, results.totalTax, percentages.totalTaxSaved]);
 
   const progressionData: ProgressionStep[] = useMemo(() => {
     const data: ProgressionStep[] = [];
@@ -129,5 +176,5 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
     return data;
   }, [inputs, province, results]);
 
-  return { results, percentages, progressionData };
+  return { results, percentages, progressionData, savingsBreakdown };
 }

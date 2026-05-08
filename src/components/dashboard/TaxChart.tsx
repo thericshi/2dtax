@@ -15,7 +15,6 @@ export default function TaxChart({ progressionData, inputs, results }: TaxChartP
   const [chartMode, setChartMode] = useState<ChartMode>('marginal');
   const [showDiff, setShowDiff] = useState(true);
 
-  // Determine if any savings strategy is currently active
   const hasSavings = inputs.rrsp > 0 || inputs.fhsa > 0 || inputs.movingExpenses > 0 || inputs.medicalExpenses > 0 || inputs.tuition > 0 || inputs.tuitionCarryForward > 0;
 
   const activeDataKey = chartMode === 'tax' ? 'tax' : chartMode === 'effective' ? 'effectiveRate' : (showDiff ? 'marginalPaid' : 'marginalRateActual');
@@ -66,7 +65,7 @@ export default function TaxChart({ progressionData, inputs, results }: TaxChartP
   };
 
   return (
-    <div className="bg-white/[0.02] backdrop-blur-xl rounded-[2rem] p-8 md:p-10 shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-white/[0.08] flex-1 min-h-[380px] flex flex-col">
+    <div className="bg-white/[0.02] backdrop-blur-xl rounded-[2rem] p-8 md:p-10 shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-white/[0.08] h-[400px] flex flex-col">
        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 gap-6">
          <div>
             <div className="flex items-center gap-3 mb-2">

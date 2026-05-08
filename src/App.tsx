@@ -4,6 +4,7 @@ import { TaxInputs, ProvinceCode } from './utils/TaxLogic';
 import ControlsPanel from './components/dashboard/ControlsPanel';
 import SummaryCard from './components/dashboard/SummaryCard';
 import TaxChart from './components/dashboard/TaxChart';
+import SavingsBreakdown from './components/dashboard/SavingsBreakdown';
 
 export default function App() {
   const [province, setProvince] = useState<ProvinceCode>('ON');
@@ -22,7 +23,7 @@ export default function App() {
 
   const updateInput = (key: keyof TaxInputs, value: number) => setInputs(prev => ({ ...prev, [key]: value }));
 
-  const { results, percentages, progressionData } = useTaxData(inputs, province);
+  const { results, percentages, progressionData, savingsBreakdown } = useTaxData(inputs, province);
 
   return (
     <div className="min-h-screen w-full font-sans flex items-center justify-center p-4 md:p-8 lg:p-12 relative">
@@ -36,7 +37,7 @@ export default function App() {
       <div className="max-w-[90rem] w-full grid grid-cols-1 xl:grid-cols-12 gap-8 lg:gap-10 relative z-10">
         
         {/* Left Column: Interactive Controls */}
-        <div className="xl:col-span-4 flex flex-col justify-center space-y-8">
+        <div className="xl:col-span-4 flex flex-col space-y-8">
           <div>
             <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white mb-3 drop-shadow-sm">
               Tax Planner
@@ -54,12 +55,17 @@ export default function App() {
           />
         </div>
 
-        {/* Right Column: Graphs & Data */}
+        {/* Right Column: Stacked Data Panels */}
         <div className="xl:col-span-8 flex flex-col space-y-8">
           <SummaryCard 
             inputs={inputs} 
             results={results} 
             percentages={percentages} 
+          />
+          <SavingsBreakdown 
+            data={savingsBreakdown}
+            actualTax={results.totalTax}
+            totalSaved={percentages.totalTaxSaved}
           />
           <TaxChart 
             progressionData={progressionData} 
