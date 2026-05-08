@@ -1,4 +1,3 @@
-// TaxLogic.js
 const FEDERAL_BRACKETS = [
   { limit: 55867, rate: 0.15 },
   { limit: 111733, rate: 0.205 },
@@ -49,18 +48,16 @@ const calculateProgressiveTax = (income, brackets, bpa) => {
 };
 
 export const calculateTax = (income, provinceCode) => {
-  const fedTax = calculateProgressiveTax(income, FEDERAL_BRACKETS, 15705); // Fed BPA 2025/26
+  const fedTax = calculateProgressiveTax(income, FEDERAL_BRACKETS, 15705);
   const provData = PROVINCIAL_DATA[provinceCode];
   let provTax = calculateProgressiveTax(income, provData.brackets, provData.bpa);
 
-  // Ontario Surtax Calculation
   if (provinceCode === 'ON') {
     let surtax = 0;
     if (provTax > 5500) surtax += (provTax - 5500) * 0.20;
     if (provTax > 7100) surtax += (provTax - 7100) * 0.36;
     provTax += surtax;
     
-    // Ontario Health Premium (Approximate steps)
     if (income > 20000) provTax += Math.min(900, (income - 20000) * 0.06);
   }
 
