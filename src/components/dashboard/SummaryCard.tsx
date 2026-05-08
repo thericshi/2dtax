@@ -10,15 +10,22 @@ interface SummaryCardProps {
 }
 
 export default function SummaryCard({ inputs, results, percentages }: SummaryCardProps) {
-  const { fedPct, provPct, rrspPct, fhsaPct, cashPct, totalRetainedPct, cashTakeHome } = percentages;
+  const { fedPct, provPct, rrspPct, fhsaPct, cashPct, totalRetainedPct, cashTakeHome, totalTaxSaved } = percentages;
 
   return (
     <div className="bg-white/[0.02] backdrop-blur-xl rounded-[2rem] p-8 md:p-12 shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-white/[0.08]">
-      <div className="mb-10 flex justify-between items-start">
+      <div className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
           <p className="text-xs font-bold tracking-widest text-white/40 uppercase mb-4">Total Net Retained</p>
-          <div className="text-5xl md:text-7xl leading-none font-black tracking-tighter text-emerald-400 mb-4 drop-shadow-[0_0_20px_rgba(52,211,153,0.3)]">
-            ${Math.round(results.takeHome).toLocaleString()}
+          <div className="flex flex-wrap items-center gap-4 mb-4">
+            <div className="text-5xl md:text-7xl leading-none font-black tracking-tighter text-emerald-400 drop-shadow-[0_0_20px_rgba(52,211,153,0.3)]">
+              ${Math.round(results.takeHome).toLocaleString()}
+            </div>
+            {totalTaxSaved > 0 && (
+              <div className="bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 px-4 py-2 rounded-xl text-sm font-black flex items-center gap-2 shadow-[0_0_20px_rgba(52,211,153,0.15)] mt-2 md:mt-0">
+                <span>★</span> +${Math.round(totalTaxSaved).toLocaleString()} Tax Saved
+              </div>
+            )}
           </div>
           <p className="font-medium text-white/50 text-base md:text-lg">
             You keep <span className="text-white font-black">{totalRetainedPct.toFixed(1)}%</span> of your <span className="text-white">${results.totalGrossIncome.toLocaleString()}</span> gross income.

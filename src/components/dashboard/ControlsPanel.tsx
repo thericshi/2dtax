@@ -59,15 +59,34 @@ export default function ControlsPanel({ inputs, updateInput, province, setProvin
         </div>
       </div>
 
-      {/* Investments & Dividends Grid */}
+      {/* Income & Investments */}
       <div className="space-y-4">
-         <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Investments & Deductions</label>
+         <label className="text-xs font-bold text-white/40 uppercase tracking-widest border-b border-white/10 pb-2 flex">Investments & Income</label>
          <div className="grid grid-cols-2 gap-3">
            <SubInput label="Capital Gains" value={inputs.capitalGains} onChange={(v) => updateInput('capitalGains', v)} />
+           <div className="hidden sm:block"></div>
            <SubInput label="Eligible Div" value={inputs.eligibleDividends} onChange={(v) => updateInput('eligibleDividends', v)} />
            <SubInput label="Ineligible Div" value={inputs.ineligibleDividends} onChange={(v) => updateInput('ineligibleDividends', v)} />
+         </div>
+      </div>
+
+      {/* Deductions */}
+      <div className="space-y-4">
+         <label className="text-xs font-bold text-emerald-400/80 uppercase tracking-widest border-b border-emerald-500/20 pb-2 flex">Deductions (Reduces Taxable Income)</label>
+         <div className="grid grid-cols-2 gap-3">
            <SubInput label="RRSP" value={inputs.rrsp} onChange={(v) => updateInput('rrsp', v)} />
            <SubInput label="FHSA" value={inputs.fhsa} onChange={(v) => updateInput('fhsa', v)} />
+           <SubInput label="Moving Exp." value={inputs.movingExpenses} onChange={(v) => updateInput('movingExpenses', v)} />
+         </div>
+      </div>
+
+      {/* Tax Credits */}
+      <div className="space-y-4">
+         <label className="text-xs font-bold text-indigo-400/80 uppercase tracking-widest border-b border-indigo-500/20 pb-2 flex">Credits (Reduces Tax Bill Directly)</label>
+         <div className="grid grid-cols-2 gap-3">
+           <SubInput label="Medical Exp." value={inputs.medicalExpenses} onChange={(v) => updateInput('medicalExpenses', v)} />
+           <SubInput label="Tuition" value={inputs.tuition} onChange={(v) => updateInput('tuition', v)} />
+           <SubInput label="Tuition (Carry Fwd)" value={inputs.tuitionCarryForward} onChange={(v) => updateInput('tuitionCarryForward', v)} />
          </div>
       </div>
 
@@ -86,7 +105,6 @@ export default function ControlsPanel({ inputs, updateInput, province, setProvin
               </option>
             ))}
           </select>
-          {/* Custom downward chevron for the select */}
           <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/40">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="6 9 12 15 18 9"></polyline>

@@ -15,6 +15,9 @@ export default function TaxChart({ progressionData, inputs, results }: TaxChartP
   const [chartMode, setChartMode] = useState<ChartMode>('marginal');
   const [showDiff, setShowDiff] = useState(true);
 
+  // Determine if any savings strategy is currently active
+  const hasSavings = inputs.rrsp > 0 || inputs.fhsa > 0 || inputs.movingExpenses > 0 || inputs.medicalExpenses > 0 || inputs.tuition > 0 || inputs.tuitionCarryForward > 0;
+
   const activeDataKey = chartMode === 'tax' ? 'tax' : chartMode === 'effective' ? 'effectiveRate' : (showDiff ? 'marginalPaid' : 'marginalRateActual');
   const activeDiffKey = chartMode === 'tax' ? 'taxDiff' : chartMode === 'effective' ? 'effectiveRateDiff' : 'marginalSaved';
 
@@ -40,7 +43,7 @@ export default function TaxChart({ progressionData, inputs, results }: TaxChartP
               <span className="font-black text-white text-xs">{formatVal(actualVal)}</span>
             </div>
 
-            {showDiff && (inputs.rrsp > 0 || inputs.fhsa > 0) && (
+            {showDiff && hasSavings && (
               <>
                 <div className="flex justify-between items-center gap-4">
                   <div className="flex items-center gap-2">
@@ -73,7 +76,7 @@ export default function TaxChart({ progressionData, inputs, results }: TaxChartP
                 {chartMode === 'tax' && 'Total Tax Dollar Projection'}
               </p>
               
-              {(inputs.rrsp > 0 || inputs.fhsa > 0) && (
+              {hasSavings && (
                 <button 
                   onClick={() => setShowDiff(!showDiff)}
                   className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-md transition-all border ${
@@ -131,7 +134,7 @@ export default function TaxChart({ progressionData, inputs, results }: TaxChartP
              
              <Area type="monotoneX" dataKey={activeDataKey} stackId="1" stroke="#818cf8" strokeWidth={3} fillOpacity={1} fill="url(#colorActual)" activeDot={{ r: 6, fill: '#050816', stroke: '#818cf8', strokeWidth: 3 }} />
              
-             {showDiff && (inputs.rrsp > 0 || inputs.fhsa > 0) && (
+             {showDiff && hasSavings && (
                <Area type="monotoneX" dataKey={activeDiffKey} stackId="1" stroke="#34d399" strokeWidth={2} strokeDasharray="4 4" fillOpacity={1} fill="url(#colorDiff)" activeDot={{ r: 5, fill: '#050816', stroke: '#34d399', strokeWidth: 2 }} />
              )}
            </AreaChart>

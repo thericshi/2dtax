@@ -9,6 +9,7 @@ export interface Percentages {
   cashPct: number;
   totalRetainedPct: number;
   cashTakeHome: number;
+  totalTaxSaved: number;
 }
 
 export interface ProgressionStep {
@@ -28,6 +29,14 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
 
   const percentages: Percentages = useMemo(() => {
     const safeIncome = results.totalGrossIncome || 1;
+    // Base simulation without ANY registered accounts, deductions, or credits
+    const baseTaxRes = calculateTax({ 
+        ...inputs, 
+        rrsp: 0, fhsa: 0, movingExpenses: 0, medicalExpenses: 0, tuition: 0, tuitionCarryForward: 0 
+    }, province);
+    const totalTaxSaved = Math.max(0, baseTaxRes.totalTax - results.totalTax);
+    
+    // Liquid cash is total gross minus total tax minus registered account contributions
     const cashTakeHome = Math.max(0, results.takeHome - inputs.rrsp - inputs.fhsa);
 
     return {
@@ -37,21 +46,21 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
       fhsaPct: (inputs.fhsa / safeIncome) * 100,
       cashPct: (cashTakeHome / safeIncome) * 100,
       totalRetainedPct: (results.takeHome / safeIncome) * 100,
-      cashTakeHome
+      cashTakeHome,
+      totalTaxSaved
     };
-  }, [inputs, results]);
+  }, [inputs, results, province]);
 
   const progressionData: ProgressionStep[] = useMemo(() => {
     const data: ProgressionStep[] = [];
     const maxVal = results.totalGrossIncome || 0;
-    const taxableIncome = Math.max(0, maxVal - inputs.rrsp - inputs.fhsa);
+    const totalDeduct = inputs.rrsp + inputs.fhsa + inputs.movingExpenses;
+    const taxableIncome = Math.max(0, maxVal - totalDeduct);
     
     if (maxVal === 0) {
       return [{ 
-        income: 0, 
-        effectiveRate: 0, effectiveRateDiff: 0, 
-        marginalRateActual: 0, marginalPaid: 0, marginalSaved: 0, baseMarginalRate: 0,
-        tax: 0, taxDiff: 0 
+        income: 0, effectiveRate: 0, effectiveRateDiff: 0, marginalRateActual: 0, 
+        marginalPaid: 0, marginalSaved: 0, tax: 0, taxDiff: 0, baseMarginalRate: 0 
       }];
     }
 
@@ -63,11 +72,17 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
         eligibleDividends: inputs.eligibleDividends * ratio,
         ineligibleDividends: inputs.ineligibleDividends * ratio,
         rrsp: inputs.rrsp * ratio,
-        fhsa: inputs.fhsa * ratio
+        fhsa: inputs.fhsa * ratio,
+        movingExpenses: inputs.movingExpenses * ratio,
+        medicalExpenses: inputs.medicalExpenses * ratio,
+        tuition: inputs.tuition * ratio,
+        tuitionCarryForward: inputs.tuitionCarryForward * ratio
       };
 
       const res = calculateTax(simInputs, province);
-      const resBase = calculateTax({ ...simInputs, rrsp: 0, fhsa: 0 }, province);
+      const resBase = calculateTax({ 
+          ...simInputs, rrsp: 0, fhsa: 0, movingExpenses: 0, medicalExpenses: 0, tuition: 0, tuitionCarryForward: 0 
+      }, province);
       const baseMarginalRate = Number(resBase.marginalRate.toFixed(1));
       
       let mPaid = 0;

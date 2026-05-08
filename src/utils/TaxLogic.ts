@@ -7,6 +7,10 @@ export interface TaxInputs {
   ineligibleDividends: number;
   rrsp: number;
   fhsa: number;
+  movingExpenses: number;
+  medicalExpenses: number;
+  tuition: number;
+  tuitionCarryForward: number;
 }
 
 export interface TaxResult {
@@ -33,7 +37,6 @@ const FEDERAL_BRACKETS: TaxBracket[] = [
   { limit: Infinity, rate: 0.33 },
 ];
 
-// Simplified approximation of 2024 Provincial brackets, Basic Personal Amounts, and Dividend Tax Credits
 const PROVINCIAL_DATA: Record<ProvinceCode, { brackets: TaxBracket[], bpa: number, eligibleDTC: number, ineligibleDTC: number, hasSurtax?: boolean }> = {
   AB: {
     brackets: [{ limit: 148269, rate: 0.10 }, { limit: 177922, rate: 0.12 }, { limit: 237230, rate: 0.13 }, { limit: 355845, rate: 0.14 }, { limit: Infinity, rate: 0.15 }],
@@ -102,7 +105,6 @@ const calculateProgressiveTax = (taxableAmount: number, brackets: TaxBracket[]):
   return tax;
 };
 
-// Internal function missing the marginal rate
 const calculateCoreTax = (inputs: TaxInputs, provinceCode: ProvinceCode): Omit<TaxResult, 'marginalRate'> => {
   const {
     employment = 0,
@@ -110,7 +112,11 @@ const calculateCoreTax = (inputs: TaxInputs, provinceCode: ProvinceCode): Omit<T
     eligibleDividends = 0,
     ineligibleDividends = 0,
     rrsp = 0,
-    fhsa = 0
+    fhsa = 0,
+    movingExpenses = 0,
+    medicalExpenses = 0,
+    tuition = 0,
+    tuitionCarryForward = 0
   } = inputs;
 
   const totalGrossIncome = employment + capitalGains + eligibleDividends + ineligibleDividends;
@@ -124,34 +130,48 @@ const calculateCoreTax = (inputs: TaxInputs, provinceCode: ProvinceCode): Omit<T
 
   const grossedUpEligible = eligibleDividends * 1.38;
   const grossedUpIneligible = ineligibleDividends * 1.15;
-  const totalDeductions = rrsp + fhsa;
-
+  
+  // Apply deductions to reduce net taxable income
+  const totalDeductions = rrsp + fhsa + movingExpenses;
   let netIncomeForTax = employment + cgInclusion + grossedUpEligible + grossedUpIneligible - totalDeductions;
   netIncomeForTax = Math.max(0, netIncomeForTax);
 
+  // Federal calculations
   const fedTaxBeforeCredits = calculateProgressiveTax(netIncomeForTax, FEDERAL_BRACKETS);
-  const fedBpa = 15705; 
-  const fedBpaCredit = fedBpa * 0.15;
+  const fedBpaCredit = 15705 * 0.15;
   const fedEligibleDTC = grossedUpEligible * 0.150198;
   const fedIneligibleDTC = grossedUpIneligible * 0.090301;
-  const totalFedCredits = fedBpaCredit + fedEligibleDTC + fedIneligibleDTC;
   
+  // Specific Credits: Tuition
+  const totalTuition = tuition + tuitionCarryForward;
+  const fedTuitionCredit = totalTuition * 0.15;
+
+  // Specific Credits: Medical Expenses (Exceeding 3% of net income or $2759)
+  const medThreshold = Math.min(netIncomeForTax * 0.03, 2759);
+  const eligibleMed = Math.max(0, medicalExpenses - medThreshold);
+  const fedMedCredit = eligibleMed * 0.15;
+
+  const totalFedCredits = fedBpaCredit + fedEligibleDTC + fedIneligibleDTC + fedTuitionCredit + fedMedCredit;
   let fedTax = Math.max(0, fedTaxBeforeCredits - totalFedCredits);
 
-  // Quebec receives a 16.5% Federal tax abatement
   if (provinceCode === 'QC') {
     fedTax = fedTax * (1 - 0.165);
   }
 
+  // Provincial calculations
   const provData = PROVINCIAL_DATA[provinceCode];
+  const provLowestRate = provData.brackets[0].rate;
   let provTaxBeforeCredits = calculateProgressiveTax(netIncomeForTax, provData.brackets);
-  const provBpaCredit = provData.bpa * provData.brackets[0].rate;
+  
+  const provBpaCredit = provData.bpa * provLowestRate;
   const provEligibleDTC = grossedUpEligible * provData.eligibleDTC;
   const provIneligibleDTC = grossedUpIneligible * provData.ineligibleDTC;
+  
+  const provTuitionCredit = totalTuition * provLowestRate;
+  const provMedCredit = eligibleMed * provLowestRate;
 
-  let provTax = Math.max(0, provTaxBeforeCredits - provBpaCredit - provEligibleDTC - provIneligibleDTC);
+  let provTax = Math.max(0, provTaxBeforeCredits - provBpaCredit - provEligibleDTC - provIneligibleDTC - provTuitionCredit - provMedCredit);
 
-  // Ontario Specific Health Premium and Surtaxes
   if (provinceCode === 'ON') {
     let surtax = 0;
     if (provTax > 5500) surtax += (provTax - 5500) * 0.20;

@@ -13,7 +13,11 @@ export default function App() {
     eligibleDividends: 0,
     ineligibleDividends: 0,
     rrsp: 0,
-    fhsa: 0
+    fhsa: 0,
+    movingExpenses: 0,
+    medicalExpenses: 0,
+    tuition: 0,
+    tuitionCarryForward: 0
   });
 
   const updateInput = (key: keyof TaxInputs, value: number) => setInputs(prev => ({ ...prev, [key]: value }));
@@ -31,7 +35,7 @@ export default function App() {
 
       <div className="max-w-[90rem] w-full grid grid-cols-1 xl:grid-cols-12 gap-8 lg:gap-10 relative z-10">
         
-        {/* Left Column: Interactive Controls (Narrowed to col-span-4) */}
+        {/* Left Column: Interactive Controls */}
         <div className="xl:col-span-4 flex flex-col justify-center space-y-8">
           <div>
             <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white mb-3 drop-shadow-sm">
@@ -50,7 +54,7 @@ export default function App() {
           />
         </div>
 
-        {/* Right Column: Graphs & Data (Expanded to col-span-8) */}
+        {/* Right Column: Graphs & Data */}
         <div className="xl:col-span-8 flex flex-col space-y-8">
           <SummaryCard 
             inputs={inputs} 
