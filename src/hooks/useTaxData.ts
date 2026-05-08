@@ -35,9 +35,10 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
 
   const percentages: Percentages = useMemo(() => {
     const safeIncome = results.totalGrossIncome || 1;
+    // Base simulation without ANY registered accounts, deductions, credits, or loss applications
     const baseTaxRes = calculateTax({ 
         ...inputs, 
-        rrsp: 0, fhsa: 0, movingExpenses: 0, medicalExpenses: 0, tuition: 0, tuitionCarryForward: 0 
+        rrsp: 0, fhsa: 0, movingExpenses: 0, medicalExpenses: 0, tuition: 0, tuitionCarryForward: 0, donations: 0, capitalLoss: 0 
     }, province);
     const totalTaxSaved = Math.max(0, baseTaxRes.totalTax - results.totalTax);
     
@@ -81,8 +82,10 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
     const movingImpact = getImpact(['movingExpenses']);
     const medicalImpact = getImpact(['medicalExpenses']);
     const tuitionImpact = getImpact(['tuition', 'tuitionCarryForward']);
+    const donationsImpact = getImpact(['donations']);
+    const capitalLossImpact = getImpact(['capitalLoss']);
 
-    const totalImpact = rrspImpact + fhsaImpact + movingImpact + medicalImpact + tuitionImpact;
+    const totalImpact = rrspImpact + fhsaImpact + movingImpact + medicalImpact + tuitionImpact + donationsImpact + capitalLossImpact;
     if (totalImpact <= 0) return [];
 
     // Normalize isolated impacts to perfectly match the true total tax saved
@@ -94,6 +97,8 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
     if (movingImpact > 0) breakdown.push({ category: 'Moving Exp.', amount: movingImpact * factor, color: '#059669' });
     if (medicalImpact > 0) breakdown.push({ category: 'Medical Exp.', amount: medicalImpact * factor, color: '#818cf8' });
     if (tuitionImpact > 0) breakdown.push({ category: 'Tuition', amount: tuitionImpact * factor, color: '#6366f1' });
+    if (donationsImpact > 0) breakdown.push({ category: 'Donations', amount: donationsImpact * factor, color: '#ec4899' });
+    if (capitalLossImpact > 0) breakdown.push({ category: 'Capital Loss', amount: capitalLossImpact * factor, color: '#f59e0b' });
 
     return breakdown.sort((a, b) => b.amount - a.amount);
   }, [inputs, province, results.totalTax, percentages.totalTaxSaved]);
@@ -116,6 +121,7 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
       const simInputs: TaxInputs = {
         employment: inputs.employment * ratio,
         capitalGains: inputs.capitalGains * ratio,
+        capitalLoss: inputs.capitalLoss * ratio,
         eligibleDividends: inputs.eligibleDividends * ratio,
         ineligibleDividends: inputs.ineligibleDividends * ratio,
         rrsp: inputs.rrsp * ratio,
@@ -123,12 +129,13 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
         movingExpenses: inputs.movingExpenses * ratio,
         medicalExpenses: inputs.medicalExpenses * ratio,
         tuition: inputs.tuition * ratio,
-        tuitionCarryForward: inputs.tuitionCarryForward * ratio
+        tuitionCarryForward: inputs.tuitionCarryForward * ratio,
+        donations: inputs.donations * ratio
       };
 
       const res = calculateTax(simInputs, province);
       const resBase = calculateTax({ 
-          ...simInputs, rrsp: 0, fhsa: 0, movingExpenses: 0, medicalExpenses: 0, tuition: 0, tuitionCarryForward: 0 
+          ...simInputs, rrsp: 0, fhsa: 0, movingExpenses: 0, medicalExpenses: 0, tuition: 0, tuitionCarryForward: 0, capitalLoss: 0, donations: 0 
       }, province);
       const baseMarginalRate = Number(resBase.marginalRate.toFixed(1));
       

@@ -11,6 +11,7 @@ export default function App() {
   const [inputs, setInputs] = useState<TaxInputs>({
     employment: 90000,
     capitalGains: 0,
+    capitalLoss: 0,
     eligibleDividends: 0,
     ineligibleDividends: 0,
     rrsp: 0,
@@ -18,7 +19,8 @@ export default function App() {
     movingExpenses: 0,
     medicalExpenses: 0,
     tuition: 0,
-    tuitionCarryForward: 0
+    tuitionCarryForward: 0,
+    donations: 0
   });
 
   const updateInput = (key: keyof TaxInputs, value: number) => setInputs(prev => ({ ...prev, [key]: value }));

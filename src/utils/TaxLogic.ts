@@ -3,6 +3,7 @@ export type ProvinceCode = 'AB' | 'BC' | 'MB' | 'NB' | 'NL' | 'NS' | 'NT' | 'NU'
 export interface TaxInputs {
   employment: number;
   capitalGains: number;
+  capitalLoss: number;
   eligibleDividends: number;
   ineligibleDividends: number;
   rrsp: number;
@@ -11,6 +12,7 @@ export interface TaxInputs {
   medicalExpenses: number;
   tuition: number;
   tuitionCarryForward: number;
+  donations: number;
 }
 
 export interface TaxResult {
@@ -109,6 +111,7 @@ const calculateCoreTax = (inputs: TaxInputs, provinceCode: ProvinceCode): Omit<T
   const {
     employment = 0,
     capitalGains = 0,
+    capitalLoss = 0,
     eligibleDividends = 0,
     ineligibleDividends = 0,
     rrsp = 0,
@@ -116,22 +119,25 @@ const calculateCoreTax = (inputs: TaxInputs, provinceCode: ProvinceCode): Omit<T
     movingExpenses = 0,
     medicalExpenses = 0,
     tuition = 0,
-    tuitionCarryForward = 0
+    tuitionCarryForward = 0,
+    donations = 0
   } = inputs;
 
   const totalGrossIncome = employment + capitalGains + eligibleDividends + ineligibleDividends;
 
+  // Capital Losses can only offset Capital Gains
+  const netCapitalGains = Math.max(0, capitalGains - capitalLoss);
+
   let cgInclusion = 0;
-  if (capitalGains <= 250000) {
-    cgInclusion = capitalGains * 0.5;
+  if (netCapitalGains <= 250000) {
+    cgInclusion = netCapitalGains * 0.5;
   } else {
-    cgInclusion = (250000 * 0.5) + ((capitalGains - 250000) * (2/3));
+    cgInclusion = (250000 * 0.5) + ((netCapitalGains - 250000) * (2/3));
   }
 
   const grossedUpEligible = eligibleDividends * 1.38;
   const grossedUpIneligible = ineligibleDividends * 1.15;
   
-  // Apply deductions to reduce net taxable income
   const totalDeductions = rrsp + fhsa + movingExpenses;
   let netIncomeForTax = employment + cgInclusion + grossedUpEligible + grossedUpIneligible - totalDeductions;
   netIncomeForTax = Math.max(0, netIncomeForTax);
@@ -142,16 +148,17 @@ const calculateCoreTax = (inputs: TaxInputs, provinceCode: ProvinceCode): Omit<T
   const fedEligibleDTC = grossedUpEligible * 0.150198;
   const fedIneligibleDTC = grossedUpIneligible * 0.090301;
   
-  // Specific Credits: Tuition
   const totalTuition = tuition + tuitionCarryForward;
   const fedTuitionCredit = totalTuition * 0.15;
 
-  // Specific Credits: Medical Expenses (Exceeding 3% of net income or $2759)
   const medThreshold = Math.min(netIncomeForTax * 0.03, 2759);
   const eligibleMed = Math.max(0, medicalExpenses - medThreshold);
   const fedMedCredit = eligibleMed * 0.15;
 
-  const totalFedCredits = fedBpaCredit + fedEligibleDTC + fedIneligibleDTC + fedTuitionCredit + fedMedCredit;
+  // Federal Donation Credit: 15% on first $200, 29% on remaining
+  const fedDonationCredit = (Math.min(200, donations) * 0.15) + (Math.max(0, donations - 200) * 0.29);
+
+  const totalFedCredits = fedBpaCredit + fedEligibleDTC + fedIneligibleDTC + fedTuitionCredit + fedMedCredit + fedDonationCredit;
   let fedTax = Math.max(0, fedTaxBeforeCredits - totalFedCredits);
 
   if (provinceCode === 'QC') {
@@ -161,16 +168,20 @@ const calculateCoreTax = (inputs: TaxInputs, provinceCode: ProvinceCode): Omit<T
   // Provincial calculations
   const provData = PROVINCIAL_DATA[provinceCode];
   const provLowestRate = provData.brackets[0].rate;
+  const provHighestRate = provData.brackets[provData.brackets.length - 1].rate;
+  
   let provTaxBeforeCredits = calculateProgressiveTax(netIncomeForTax, provData.brackets);
   
   const provBpaCredit = provData.bpa * provLowestRate;
   const provEligibleDTC = grossedUpEligible * provData.eligibleDTC;
   const provIneligibleDTC = grossedUpIneligible * provData.ineligibleDTC;
-  
   const provTuitionCredit = totalTuition * provLowestRate;
   const provMedCredit = eligibleMed * provLowestRate;
+  
+  // Provincial Donation Credit: Lowest rate on first $200, Highest rate on remainder
+  const provDonationCredit = (Math.min(200, donations) * provLowestRate) + (Math.max(0, donations - 200) * provHighestRate);
 
-  let provTax = Math.max(0, provTaxBeforeCredits - provBpaCredit - provEligibleDTC - provIneligibleDTC - provTuitionCredit - provMedCredit);
+  let provTax = Math.max(0, provTaxBeforeCredits - provBpaCredit - provEligibleDTC - provIneligibleDTC - provTuitionCredit - provMedCredit - provDonationCredit);
 
   if (provinceCode === 'ON') {
     let surtax = 0;

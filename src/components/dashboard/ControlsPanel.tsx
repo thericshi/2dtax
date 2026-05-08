@@ -64,7 +64,7 @@ export default function ControlsPanel({ inputs, updateInput, province, setProvin
          <label className="text-xs font-bold text-white/40 uppercase tracking-widest border-b border-white/10 pb-2 flex">Investments & Income</label>
          <div className="grid grid-cols-2 gap-3">
            <SubInput label="Capital Gains" value={inputs.capitalGains} onChange={(v) => updateInput('capitalGains', v)} />
-           <div className="hidden sm:block"></div>
+           <SubInput label="Capital Loss" value={inputs.capitalLoss} onChange={(v) => updateInput('capitalLoss', v)} />
            <SubInput label="Eligible Div" value={inputs.eligibleDividends} onChange={(v) => updateInput('eligibleDividends', v)} />
            <SubInput label="Ineligible Div" value={inputs.ineligibleDividends} onChange={(v) => updateInput('ineligibleDividends', v)} />
          </div>
@@ -84,6 +84,7 @@ export default function ControlsPanel({ inputs, updateInput, province, setProvin
       <div className="space-y-4">
          <label className="text-xs font-bold text-indigo-400/80 uppercase tracking-widest border-b border-indigo-500/20 pb-2 flex">Credits (Reduces Tax Bill Directly)</label>
          <div className="grid grid-cols-2 gap-3">
+           <SubInput label="Donations" value={inputs.donations} onChange={(v) => updateInput('donations', v)} />
            <SubInput label="Medical Exp." value={inputs.medicalExpenses} onChange={(v) => updateInput('medicalExpenses', v)} />
            <SubInput label="Tuition" value={inputs.tuition} onChange={(v) => updateInput('tuition', v)} />
            <SubInput label="Tuition (Carry Fwd)" value={inputs.tuitionCarryForward} onChange={(v) => updateInput('tuitionCarryForward', v)} />
