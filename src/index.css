@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #020617; /* Matches Tailwind's slate-950 from the app */
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
