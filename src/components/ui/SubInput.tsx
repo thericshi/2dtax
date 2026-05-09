@@ -16,10 +16,16 @@ export default function SubInput({ label, value, onChange, icon }: SubInputProps
       <div className="relative">
         <span className="absolute left-2 top-1/2 -translate-y-1/2 text-white/30 font-black">$</span>
         <input
-          type="number"
-          min="0"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           value={value === 0 ? '' : value}
-          onChange={(e) => onChange(Number(e.target.value))}
+          onChange={(e) => {
+            // Strip any non-digit characters (including 'e', '-', '.')
+            const digitsOnly = e.target.value.replace(/\D/g, '');
+            // Limit to 12 digits max
+            onChange(Number(digitsOnly.slice(0, 12)));
+          }}
           className="w-full bg-transparent outline-none py-1 pl-6 pr-2 text-lg font-black text-white placeholder:text-white/10"
           placeholder="0"
         />

@@ -142,7 +142,8 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
       let mPaid = 0;
       let mSaved = 0;
 
-      if (forceSaved || incomeAmount > taxableIncome + 0.01) {
+      // Check > 0.5 allows robust vertical drop plotting without float math bugs at large scales
+      if (forceSaved || incomeAmount > taxableIncome + 0.5) {
         mSaved = baseMarginalRate;
       } else {
         mPaid = baseMarginalRate;
@@ -161,8 +162,14 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
       };
     };
 
+    const TARGET_STEPS = 100;
+    const dynamicStepRaw = maxVal / TARGET_STEPS;
+    const stepSize = Math.max(10000, Math.ceil(dynamicStepRaw / 10000) * 10000);
+
     const stepSet = new Set<number>([0]);
-    for (let i = 10000; i < maxVal; i += 10000) stepSet.add(i);
+    for (let i = stepSize; i < maxVal; i += stepSize) {
+       stepSet.add(i);
+    }
     stepSet.add(maxVal);
     
     if (taxableIncome >= 0 && taxableIncome < maxVal) {
@@ -174,7 +181,8 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
     for (const step of sortedSteps) {
        if (step === taxableIncome && taxableIncome < maxVal) {
            data.push(calculateStep(step, false)); 
-           data.push(calculateStep(step + 0.001, true)); 
+           // Step +1 dollar instead of +0.001 prevents float overflow at 1 trillion scale
+           data.push(calculateStep(step + 1, true)); 
        } else {
            data.push(calculateStep(step, step > taxableIncome));
        }

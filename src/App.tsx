@@ -9,7 +9,7 @@ import SavingsBreakdown from './components/dashboard/SavingsBreakdown';
 export default function App() {
   const [province, setProvince] = useState<ProvinceCode>('ON');
   const [inputs, setInputs] = useState<TaxInputs>({
-    employment: 90000,
+    employment: 70000,
     capitalGains: 0,
     capitalLoss: 0,
     eligibleDividends: 0,
@@ -45,7 +45,7 @@ export default function App() {
               Tax Planner
             </h1>
             <p className="text-white/50 text-lg font-medium leading-relaxed">
-              Understand your exact 2025 tax obligations and take-home pay with precision.
+              Understand your exact tax obligations and take-home pay.
             </p>
           </div>
 

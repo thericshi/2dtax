@@ -27,6 +27,20 @@ export default function ControlsPanel({ inputs, updateInput, province, setProvin
     { code: 'YT', name: 'Yukon' },
   ];
 
+  // Helper functions to create a non-linear (cubic) slider scale capped at 1 Million
+  // 100^3 = 1,000,000, which naturally places 125k right in the center (50^3)
+  const sliderToIncome = (val: number) => {
+    const raw = Math.pow(val, 3);
+    if (raw <= 50000) return Math.round(raw / 500) * 500;
+    if (raw <= 250000) return Math.round(raw / 1000) * 1000;
+    return Math.round(raw / 5000) * 5000;
+  };
+
+  const incomeToSlider = (income: number) => {
+    // If user types more than 1M, visually park the slider at the maximum (100)
+    return Math.min(100, Math.cbrt(Math.max(0, income)));
+  };
+
   return (
     <div className="bg-white/[0.02] backdrop-blur-xl rounded-[2rem] p-6 md:p-8 shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-white/[0.08] space-y-10">
       
@@ -37,25 +51,34 @@ export default function ControlsPanel({ inputs, updateInput, province, setProvin
         <div className="flex items-end text-5xl md:text-6xl font-black tracking-tighter text-white border-b border-white/10 pb-4 focus-within:border-white/40 transition-colors">
           <span className="opacity-30 mr-2 pb-1 text-4xl">$</span>
           <input
-            type="number"
-            min="0"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             value={inputs.employment === 0 ? '' : inputs.employment}
-            onChange={(e) => updateInput('employment', Number(e.target.value))}
+            onChange={(e) => {
+              // Strip non-digits and cap at 12 characters (999 Billion limit)
+              const digitsOnly = e.target.value.replace(/\D/g, '');
+              updateInput('employment', Number(digitsOnly.slice(0, 12)));
+            }}
             className="w-full bg-transparent outline-none p-0 m-0 leading-none placeholder:text-white/10"
             placeholder="0"
           />
         </div>
 
-        {/* Range Slider */}
+        {/* Non-Linear Range Slider */}
         <div className="pt-2">
           <input
             type="range"
             min="0"
-            max="300000"
-            step="1000"
-            value={inputs.employment}
-            onChange={(e) => updateInput('employment', Number(e.target.value))}
+            max="100"
+            step="0.01"
+            value={incomeToSlider(inputs.employment)}
+            onChange={(e) => updateInput('employment', sliderToIncome(Number(e.target.value)))}
           />
+          <div className="flex justify-between text-[10px] font-bold text-white/30 uppercase tracking-widest mt-2 px-1">
+             <span>$0</span>
+             <span>$1M+</span>
+          </div>
         </div>
       </div>
 
