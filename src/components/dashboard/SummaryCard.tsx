@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 import { TaxInputs, TaxResult } from '../../utils/TaxLogic';
 import { Percentages } from '../../hooks/useTaxData';
@@ -9,7 +9,7 @@ interface SummaryCardProps {
   percentages: Percentages;
 }
 
-export default function SummaryCard({ inputs, results, percentages }: SummaryCardProps) {
+function SummaryCard({ inputs, results, percentages }: SummaryCardProps) {
   const { fedPct, provPct, rrspPct, fhsaPct, cashPct, totalRetainedPct, cashTakeHome, totalTaxSaved } = percentages;
 
   return (
@@ -96,3 +96,5 @@ export default function SummaryCard({ inputs, results, percentages }: SummaryCar
     </div>
   );
 }
+
+export default memo(SummaryCard);

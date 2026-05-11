@@ -35,7 +35,6 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
 
   const percentages: Percentages = useMemo(() => {
     const safeIncome = results.totalGrossIncome || 1;
-    // Base simulation without ANY registered accounts, deductions, credits, or loss applications
     const baseTaxRes = calculateTax({ 
         ...inputs, 
         rrsp: 0, fhsa: 0, movingExpenses: 0, medicalExpenses: 0, tuition: 0, tuitionCarryForward: 0, donations: 0, capitalLoss: 0 
@@ -56,7 +55,6 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
     };
   }, [inputs, results, province]);
 
-  // Isolate the tax savings of each individual item for the composition breakdown
   const savingsBreakdown: SavingsBreakdownItem[] = useMemo(() => {
     if (percentages.totalTaxSaved <= 0) return [];
 
@@ -88,7 +86,6 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
     const totalImpact = rrspImpact + fhsaImpact + movingImpact + medicalImpact + tuitionImpact + donationsImpact + capitalLossImpact;
     if (totalImpact <= 0) return [];
 
-    // Normalize isolated impacts to perfectly match the true total tax saved
     const factor = percentages.totalTaxSaved / totalImpact;
 
     const breakdown: SavingsBreakdownItem[] = [];
@@ -105,7 +102,8 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
 
   const progressionData: ProgressionStep[] = useMemo(() => {
     const data: ProgressionStep[] = [];
-    const maxVal = results.totalGrossIncome || 0;
+    
+    const maxVal = (inputs.employment || 0) + (inputs.capitalGains || 0) + (inputs.eligibleDividends || 0) + (inputs.ineligibleDividends || 0);
     const totalDeduct = inputs.rrsp + inputs.fhsa + inputs.movingExpenses;
     const taxableIncome = Math.max(0, maxVal - totalDeduct);
     
@@ -142,7 +140,6 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
       let mPaid = 0;
       let mSaved = 0;
 
-      // Check > 0.5 allows robust vertical drop plotting without float math bugs at large scales
       if (forceSaved || incomeAmount > taxableIncome + 0.5) {
         mSaved = baseMarginalRate;
       } else {
@@ -181,7 +178,6 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
     for (const step of sortedSteps) {
        if (step === taxableIncome && taxableIncome < maxVal) {
            data.push(calculateStep(step, false)); 
-           // Step +1 dollar instead of +0.001 prevents float overflow at 1 trillion scale
            data.push(calculateStep(step + 1, true)); 
        } else {
            data.push(calculateStep(step, step > taxableIncome));
@@ -189,7 +185,7 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
     }
 
     return data;
-  }, [inputs, province, results]);
+  }, [inputs, province]);
 
   return { results, percentages, progressionData, savingsBreakdown };
 }

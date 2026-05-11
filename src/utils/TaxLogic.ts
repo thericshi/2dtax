@@ -125,7 +125,6 @@ const calculateCoreTax = (inputs: TaxInputs, provinceCode: ProvinceCode): Omit<T
 
   const totalGrossIncome = employment + capitalGains + eligibleDividends + ineligibleDividends;
 
-  // Capital Losses can only offset Capital Gains
   const netCapitalGains = Math.max(0, capitalGains - capitalLoss);
 
   let cgInclusion = 0;
@@ -142,7 +141,6 @@ const calculateCoreTax = (inputs: TaxInputs, provinceCode: ProvinceCode): Omit<T
   let netIncomeForTax = employment + cgInclusion + grossedUpEligible + grossedUpIneligible - totalDeductions;
   netIncomeForTax = Math.max(0, netIncomeForTax);
 
-  // Federal calculations
   const fedTaxBeforeCredits = calculateProgressiveTax(netIncomeForTax, FEDERAL_BRACKETS);
   const fedBpaCredit = 15705 * 0.15;
   const fedEligibleDTC = grossedUpEligible * 0.150198;
@@ -155,7 +153,6 @@ const calculateCoreTax = (inputs: TaxInputs, provinceCode: ProvinceCode): Omit<T
   const eligibleMed = Math.max(0, medicalExpenses - medThreshold);
   const fedMedCredit = eligibleMed * 0.15;
 
-  // Federal Donation Credit: 15% on first $200, 29% on remaining
   const fedDonationCredit = (Math.min(200, donations) * 0.15) + (Math.max(0, donations - 200) * 0.29);
 
   const totalFedCredits = fedBpaCredit + fedEligibleDTC + fedIneligibleDTC + fedTuitionCredit + fedMedCredit + fedDonationCredit;
@@ -165,7 +162,6 @@ const calculateCoreTax = (inputs: TaxInputs, provinceCode: ProvinceCode): Omit<T
     fedTax = fedTax * (1 - 0.165);
   }
 
-  // Provincial calculations
   const provData = PROVINCIAL_DATA[provinceCode];
   const provLowestRate = provData.brackets[0].rate;
   const provHighestRate = provData.brackets[provData.brackets.length - 1].rate;
@@ -178,7 +174,6 @@ const calculateCoreTax = (inputs: TaxInputs, provinceCode: ProvinceCode): Omit<T
   const provTuitionCredit = totalTuition * provLowestRate;
   const provMedCredit = eligibleMed * provLowestRate;
   
-  // Provincial Donation Credit: Lowest rate on first $200, Highest rate on remainder
   const provDonationCredit = (Math.min(200, donations) * provLowestRate) + (Math.max(0, donations - 200) * provHighestRate);
 
   let provTax = Math.max(0, provTaxBeforeCredits - provBpaCredit - provEligibleDTC - provIneligibleDTC - provTuitionCredit - provMedCredit - provDonationCredit);

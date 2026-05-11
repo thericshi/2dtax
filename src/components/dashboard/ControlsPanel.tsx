@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import SubInput from '../ui/SubInput';
 import { TaxInputs, ProvinceCode } from '../../utils/TaxLogic';
 
@@ -9,7 +9,7 @@ interface ControlsPanelProps {
   setProvince: (prov: ProvinceCode) => void;
 }
 
-export default function ControlsPanel({ inputs, updateInput, province, setProvince }: ControlsPanelProps) {
+function ControlsPanel({ inputs, updateInput, province, setProvince }: ControlsPanelProps) {
   
   const PROVINCES: { code: ProvinceCode, name: string }[] = [
     { code: 'AB', name: 'Alberta' },
@@ -27,8 +27,6 @@ export default function ControlsPanel({ inputs, updateInput, province, setProvin
     { code: 'YT', name: 'Yukon' },
   ];
 
-  // Helper functions to create a non-linear (cubic) slider scale capped at 1 Million
-  // 100^3 = 1,000,000, which naturally places 125k right in the center (50^3)
   const sliderToIncome = (val: number) => {
     const raw = Math.pow(val, 3);
     if (raw <= 50000) return Math.round(raw / 500) * 500;
@@ -37,14 +35,11 @@ export default function ControlsPanel({ inputs, updateInput, province, setProvin
   };
 
   const incomeToSlider = (income: number) => {
-    // If user types more than 1M, visually park the slider at the maximum (100)
     return Math.min(100, Math.cbrt(Math.max(0, income)));
   };
 
   return (
     <div className="bg-white/[0.02] backdrop-blur-xl rounded-[2rem] p-6 md:p-8 shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-white/[0.08] space-y-10">
-      
-      {/* Primary Income Input */}
       <div className="space-y-6">
         <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Base Employment Income</label>
         
@@ -56,7 +51,6 @@ export default function ControlsPanel({ inputs, updateInput, province, setProvin
             pattern="[0-9]*"
             value={inputs.employment === 0 ? '' : inputs.employment}
             onChange={(e) => {
-              // Strip non-digits and cap at 12 characters (999 Billion limit)
               const digitsOnly = e.target.value.replace(/\D/g, '');
               updateInput('employment', Number(digitsOnly.slice(0, 12)));
             }}
@@ -65,7 +59,6 @@ export default function ControlsPanel({ inputs, updateInput, province, setProvin
           />
         </div>
 
-        {/* Non-Linear Range Slider */}
         <div className="pt-2">
           <input
             type="range"
@@ -82,7 +75,6 @@ export default function ControlsPanel({ inputs, updateInput, province, setProvin
         </div>
       </div>
 
-      {/* Income & Investments */}
       <div className="space-y-4">
          <label className="text-xs font-bold text-white/40 uppercase tracking-widest border-b border-white/10 pb-2 flex">Investments & Income</label>
          <div className="grid grid-cols-2 gap-3">
@@ -93,7 +85,6 @@ export default function ControlsPanel({ inputs, updateInput, province, setProvin
          </div>
       </div>
 
-      {/* Deductions */}
       <div className="space-y-4">
          <label className="text-xs font-bold text-emerald-400/80 uppercase tracking-widest border-b border-emerald-500/20 pb-2 flex">Deductions (Reduces Taxable Income)</label>
          <div className="grid grid-cols-2 gap-3">
@@ -103,7 +94,6 @@ export default function ControlsPanel({ inputs, updateInput, province, setProvin
          </div>
       </div>
 
-      {/* Tax Credits */}
       <div className="space-y-4">
          <label className="text-xs font-bold text-indigo-400/80 uppercase tracking-widest border-b border-indigo-500/20 pb-2 flex">Credits (Reduces Tax Bill Directly)</label>
          <div className="grid grid-cols-2 gap-3">
@@ -114,7 +104,6 @@ export default function ControlsPanel({ inputs, updateInput, province, setProvin
          </div>
       </div>
 
-      {/* Province Dropdown Selector */}
       <div className="space-y-4">
         <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Jurisdiction</label>
         <div className="relative">
@@ -139,3 +128,5 @@ export default function ControlsPanel({ inputs, updateInput, province, setProvin
     </div>
   );
 }
+
+export default memo(ControlsPanel);

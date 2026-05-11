@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { TaxInputs, TaxResult } from '../../utils/TaxLogic';
 import { ProgressionStep } from '../../hooks/useTaxData';
@@ -11,7 +11,7 @@ interface TaxChartProps {
 
 type ChartMode = 'effective' | 'marginal' | 'tax';
 
-export default function TaxChart({ progressionData, inputs, results }: TaxChartProps) {
+function TaxChart({ progressionData, inputs, results }: TaxChartProps) {
   const [chartMode, setChartMode] = useState<ChartMode>('marginal');
   const [showDiff, setShowDiff] = useState(true);
 
@@ -20,7 +20,6 @@ export default function TaxChart({ progressionData, inputs, results }: TaxChartP
   const activeDataKey = chartMode === 'tax' ? 'tax' : chartMode === 'effective' ? 'effectiveRate' : (showDiff ? 'marginalPaid' : 'marginalRateActual');
   const activeDiffKey = chartMode === 'tax' ? 'taxDiff' : chartMode === 'effective' ? 'effectiveRateDiff' : 'marginalSaved';
 
-  // Beautifully formats massive numbers to support inputs up to $1 Trillion
   const formatCurrencyAxis = (val: number) => {
     if (val >= 1_000_000_000) return `$${+(val / 1_000_000_000).toFixed(1)}B`;
     if (val >= 1_000_000) return `$${+(val / 1_000_000).toFixed(1)}M`;
@@ -111,8 +110,9 @@ export default function TaxChart({ progressionData, inputs, results }: TaxChartP
          </div>
        </div>
        
-       <div className="flex-1 w-full">
-         <ResponsiveContainer width="100%" height="100%">
+       <div className="flex-1 w-full relative">
+         {/* PERFORMANCE FIX: Added debounce to stop ResizeObserver loop crashes */}
+         <ResponsiveContainer width="100%" height="100%" debounce={50}>
            <AreaChart data={progressionData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
              <defs>
                <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
@@ -150,3 +150,5 @@ export default function TaxChart({ progressionData, inputs, results }: TaxChartP
     </div>
   );
 }
+
+export default memo(TaxChart);

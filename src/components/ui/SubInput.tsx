@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 interface SubInputProps {
   label: string;
@@ -7,7 +7,7 @@ interface SubInputProps {
   icon?: React.ReactNode;
 }
 
-export default function SubInput({ label, value, onChange, icon }: SubInputProps) {
+function SubInput({ label, value, onChange, icon }: SubInputProps) {
   return (
     <div className="flex flex-col gap-1.5 bg-black/20 p-3.5 rounded-2xl border border-white/[0.05] focus-within:border-white/20 focus-within:bg-white/[0.02] transition-all">
       <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-1">
@@ -21,9 +21,7 @@ export default function SubInput({ label, value, onChange, icon }: SubInputProps
           pattern="[0-9]*"
           value={value === 0 ? '' : value}
           onChange={(e) => {
-            // Strip any non-digit characters (including 'e', '-', '.')
             const digitsOnly = e.target.value.replace(/\D/g, '');
-            // Limit to 12 digits max
             onChange(Number(digitsOnly.slice(0, 12)));
           }}
           className="w-full bg-transparent outline-none py-1 pl-6 pr-2 text-lg font-black text-white placeholder:text-white/10"
@@ -33,3 +31,5 @@ export default function SubInput({ label, value, onChange, icon }: SubInputProps
     </div>
   );
 }
+
+export default memo(SubInput);

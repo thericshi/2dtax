@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { motion } from 'framer-motion';
 import { SavingsBreakdownItem } from '../../hooks/useTaxData';
 
@@ -8,13 +8,10 @@ interface SavingsBreakdownProps {
   totalSaved: number;
 }
 
-export default function SavingsBreakdown({ data, actualTax, totalSaved }: SavingsBreakdownProps) {
+function SavingsBreakdown({ data, actualTax, totalSaved }: SavingsBreakdownProps) {
   const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
 
-  // The total theoretical tax bill if NO deductions were claimed
   const baseTax = actualTax + totalSaved;
-  
-  // Prevent division by zero if income is 0
   const safeBaseTax = baseTax > 0 ? baseTax : 1;
   const safeTotalSaved = totalSaved > 0 ? totalSaved : 1;
 
@@ -36,18 +33,13 @@ export default function SavingsBreakdown({ data, actualTax, totalSaved }: Saving
         <div className="flex-1 w-full">
            {viewMode === 'chart' ? (
                <div className="space-y-8">
-                   {/* Single Composition Bar */}
                    <div className="h-10 md:h-12 w-full flex rounded-2xl overflow-hidden bg-black/40 border border-white/5 relative">
-                      
-                      {/* Left: The Actual Tax You Still Pay (Gray) */}
                       <motion.div
                         layout initial={false}
                         animate={{ width: `${(actualTax / safeBaseTax) * 100}%` }}
                         transition={{ type: "spring", bounce: 0.15, duration: 0.8 }}
                         className="h-full bg-slate-500 shadow-[0_0_15px_rgba(100,116,139,0.5)] z-10 relative"
                       />
-                      
-                      {/* Right: The Breakdown of Tax Avoided (Colored) */}
                       {data.map((item, idx) => (
                          <motion.div
                            key={idx}
@@ -60,7 +52,6 @@ export default function SavingsBreakdown({ data, actualTax, totalSaved }: Saving
                       ))}
                    </div>
 
-                   {/* Composition Legend */}
                    <div className="flex flex-wrap gap-x-8 gap-y-6">
                      <div className="space-y-1">
                         <div className="flex items-center gap-2 mb-2">
@@ -124,3 +115,5 @@ export default function SavingsBreakdown({ data, actualTax, totalSaved }: Saving
      </div>
   );
 }
+
+export default memo(SavingsBreakdown);
