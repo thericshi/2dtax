@@ -65,6 +65,14 @@ function TaxChart({ progressionData, inputs, results }: TaxChartProps) {
               </>
             )}
           </div>
+          
+          <div className="mt-4 pt-3 border-t border-white/10">
+            <p className="text-white/60 text-[11px] leading-relaxed">
+              {chartMode === 'marginal' && <>Your next dollar earned is taxed at <span className="text-white font-bold">{formatVal(actualVal)}</span>.</>}
+              {chartMode === 'effective' && <>You are paying an average of <span className="text-white font-bold">{formatVal(actualVal)}</span> across your entire income.</>}
+              {chartMode === 'tax' && <>You owe a total of <span className="text-white font-bold">{formatVal(actualVal)}</span> in federal and provincial taxes.</>}
+            </p>
+          </div>
         </div>
       );
     }
@@ -111,7 +119,6 @@ function TaxChart({ progressionData, inputs, results }: TaxChartProps) {
        </div>
        
        <div className="flex-1 w-full relative">
-         {/* PERFORMANCE FIX: Added debounce to stop ResizeObserver loop crashes */}
          <ResponsiveContainer width="100%" height="100%" debounce={50}>
            <AreaChart data={progressionData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
              <defs>
