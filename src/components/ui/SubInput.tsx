@@ -18,8 +18,7 @@ function SubInput({ label, value, onChange, icon }: SubInputProps) {
         <input
           type="text"
           inputMode="numeric"
-          pattern="[0-9]*"
-          value={value === 0 ? '' : value}
+          value={value === 0 ? '' : value.toLocaleString('en-US')}
           onChange={(e) => {
             const digitsOnly = e.target.value.replace(/\D/g, '');
             onChange(Number(digitsOnly.slice(0, 12)));

@@ -48,8 +48,7 @@ function ControlsPanel({ inputs, updateInput, province, setProvince }: ControlsP
           <input
             type="text"
             inputMode="numeric"
-            pattern="[0-9]*"
-            value={inputs.employment === 0 ? '' : inputs.employment}
+            value={inputs.employment === 0 ? '' : inputs.employment.toLocaleString('en-US')}
             onChange={(e) => {
               const digitsOnly = e.target.value.replace(/\D/g, '');
               updateInput('employment', Number(digitsOnly.slice(0, 12)));
