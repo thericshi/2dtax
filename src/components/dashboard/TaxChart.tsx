@@ -35,7 +35,7 @@ function TaxChart({ progressionData, inputs, results }: TaxChartProps) {
       const formatVal = (v: number) => chartMode === 'tax' ? `$${Math.round(v).toLocaleString()}` : `${v.toFixed(1)}%`;
 
       return (
-        <div className="bg-[#0f172a]/95 border border-white/10 p-5 shadow-2xl rounded-2xl backdrop-blur-xl min-w-[200px]">
+        <div className="bg-[#0f172a]/95 border border-white/10 p-4 sm:p-5 shadow-2xl rounded-2xl backdrop-blur-xl min-w-[200px]">
           <p className="font-bold text-white text-sm mb-3 border-b border-white/10 pb-2">
             Gross: ${Math.round(Number(label)).toLocaleString()}
           </p>
@@ -80,14 +80,14 @@ function TaxChart({ progressionData, inputs, results }: TaxChartProps) {
   };
 
   return (
-    <div className="bg-white/[0.02] backdrop-blur-xl rounded-[2rem] p-8 md:p-10 shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-white/[0.08] flex-1 min-h-[380px] flex flex-col">
+    <div className="bg-white/[0.02] backdrop-blur-xl rounded-[2rem] p-6 md:p-10 shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-white/[0.08] h-[400px] xl:h-auto xl:flex-1 xl:min-h-[450px] flex flex-col">
        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 gap-6">
          <div>
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex flex-wrap items-center gap-3 mb-2">
               <p className="text-xs font-bold tracking-widest text-white/40 uppercase">
                 {chartMode === 'effective' && 'Overall Effective Rate'}
                 {chartMode === 'marginal' && 'Marginal Tax Rate'}
-                {chartMode === 'tax' && 'Total Tax Dollar Projection'}
+                {chartMode === 'tax' && 'Total Tax Projection'}
               </p>
               
               {hasSavings && (
@@ -111,16 +111,16 @@ function TaxChart({ progressionData, inputs, results }: TaxChartProps) {
             </p>
          </div>
          
-         <div className="flex flex-wrap bg-black/40 p-1.5 rounded-xl border border-white/10">
-           <button onClick={() => setChartMode('effective')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${chartMode === 'effective' ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}>% Effective</button>
-           <button onClick={() => setChartMode('marginal')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${chartMode === 'marginal' ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}>% Marginal</button>
-           <button onClick={() => setChartMode('tax')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${chartMode === 'tax' ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}>$ Tax</button>
+         <div className="flex flex-wrap bg-black/40 p-1.5 rounded-xl border border-white/10 w-full sm:w-auto">
+           <button onClick={() => setChartMode('effective')} className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${chartMode === 'effective' ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}>% Effective</button>
+           <button onClick={() => setChartMode('marginal')} className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${chartMode === 'marginal' ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}>% Marginal</button>
+           <button onClick={() => setChartMode('tax')} className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${chartMode === 'tax' ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}>$ Tax</button>
          </div>
        </div>
        
        <div className="flex-1 w-full relative">
          <ResponsiveContainer width="100%" height="100%" debounce={50}>
-           <AreaChart data={progressionData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+           <AreaChart data={progressionData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
              <defs>
                <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
                  <stop offset="0%" stopColor="#818cf8" stopOpacity={0.5}/>
@@ -135,13 +135,13 @@ function TaxChart({ progressionData, inputs, results }: TaxChartProps) {
                type="number" domain={[0, 'dataMax']} dataKey="income" 
                tickFormatter={formatCurrencyAxis} 
                stroke="#ffffff" opacity={0.2} 
-               tick={{ fill: '#ffffff', fontWeight: 'bold', fontSize: 11, opacity: 0.5 }}
-               axisLine={false} tickLine={false} dy={10} tickCount={8}
+               tick={{ fill: '#ffffff', fontWeight: 'bold', fontSize: 10, opacity: 0.5 }}
+               axisLine={false} tickLine={false} dy={10} tickCount={6}
              />
              <YAxis 
                tickFormatter={(val: number) => chartMode === 'tax' ? formatCurrencyAxis(val) : `${val}%`} 
                stroke="#ffffff" opacity={0.2} 
-               tick={{ fill: '#ffffff', fontWeight: 'bold', fontSize: 11, opacity: 0.5 }}
+               tick={{ fill: '#ffffff', fontWeight: 'bold', fontSize: 10, opacity: 0.5 }}
                axisLine={false} tickLine={false} dx={-5}
              />
              <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.2)', strokeWidth: 1, strokeDasharray: '4 4' }} />
