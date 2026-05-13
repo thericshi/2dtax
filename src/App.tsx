@@ -12,6 +12,9 @@ export default function App() {
   const [isControlsOpen, setIsControlsOpen] = useState(true);
   const [isSummaryInView, setIsSummaryInView] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
+  
+  // State for the new Mobile Edit Overlay
+  const [activeEdit, setActiveEdit] = useState<{key: keyof TaxInputs, label: string} | null>(null);
 
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -76,9 +79,6 @@ export default function App() {
 
   return (
     <>
-      {/* FIX: The Jump Button is now moved OUTSIDE the transform-gpu wrapper. 
-        This guarantees `position: fixed` attaches to the viewport, making it float perfectly.
-      */}
       <AnimatePresence>
         {isScrolling && inputs.employment > 0 && province !== '' && (
           <motion.button
@@ -98,6 +98,52 @@ export default function App() {
               </svg>
             )}
           </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* MOBILE EDIT OVERLAY */}
+      <AnimatePresence>
+        {activeEdit && (
+          <motion.div
+            initial={{ opacity: 0, y: '100%' }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: '100%' }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="fixed inset-0 z-[99999] bg-[#0f172a]/90 backdrop-blur-2xl flex flex-col xl:hidden"
+          >
+             {/* Translucent floating top part */}
+             <div className="bg-white/[0.03] border-b border-white/10 p-6 pt-12 shadow-2xl relative z-20 backdrop-blur-3xl">
+                <div className="flex justify-between items-center mb-6">
+                   <span className="text-xs font-bold text-white/60 uppercase tracking-widest">{activeEdit.label}</span>
+                   <button onClick={() => setActiveEdit(null)} className="text-emerald-400 font-bold text-sm bg-emerald-500/10 px-5 py-2 rounded-full active:scale-95 transition-transform">Done</button>
+                </div>
+                <div className="flex items-end text-6xl font-black tracking-tighter text-white">
+                   <span className="opacity-30 mr-2 pb-1 text-4xl">$</span>
+                   <input
+                     autoFocus
+                     type="text"
+                     inputMode="numeric"
+                     value={inputs[activeEdit.key] === 0 ? '' : inputs[activeEdit.key].toLocaleString('en-US')}
+                     onChange={(e) => {
+                       const digitsOnly = e.target.value.replace(/\D/g, '');
+                       updateInput(activeEdit.key, Number(digitsOnly.slice(0, 12)));
+                     }}
+                     className="w-full bg-transparent outline-none p-0 m-0 leading-none placeholder:text-white/10"
+                     placeholder="0"
+                   />
+                </div>
+                <div className="mt-6 flex items-center justify-between text-sm bg-black/20 p-4 rounded-2xl border border-white/5 shadow-inner">
+                   <span className="text-white/50 font-medium">Net Take Home:</span>
+                   <span className="text-emerald-400 font-black text-lg">${Math.round(results.takeHome).toLocaleString()}</span>
+                </div>
+             </div>
+
+             {/* Bottom/bg shows the charts */}
+             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6 opacity-60">
+                <TaxChart progressionData={progressionData} inputs={deferredInputs} results={results} />
+                <SummaryCard inputs={deferredInputs} results={results} percentages={percentages} />
+             </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -164,6 +210,7 @@ export default function App() {
                     updateInput={updateInput} 
                     province={province} 
                     setProvince={setProvince} 
+                    onMobileEdit={(key, label) => setActiveEdit({ key, label })}
                   />
                 </div>
               </motion.div>
