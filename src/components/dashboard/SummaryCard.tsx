@@ -8,10 +8,11 @@ interface SummaryCardProps {
   inputs: TaxInputs;
   results: TaxResult;
   percentages: Percentages;
+  provinceCode: string;
 }
 
-function SummaryCard({ inputs, results, percentages }: SummaryCardProps) {
-  const { fedPct, provPct, rrspPct, fhsaPct, cashPct, totalRetainedPct, cashTakeHome, totalTaxSaved } = percentages;
+function SummaryCard({ inputs, results, percentages, provinceCode }: SummaryCardProps) {
+  const { fedPct, provPct, cppPct, eiPct, rrspPct, fhsaPct, cashPct, totalRetainedPct, cashTakeHome, totalTaxSaved } = percentages;
 
   const [enableStagger, setEnableStagger] = useState(true);
   const [tooltip, setTooltip] = useState<{ visible: boolean; x: number; y: number; title: string; desc: string }>({
@@ -57,6 +58,8 @@ function SummaryCard({ inputs, results, percentages }: SummaryCardProps) {
   const cashIdx = sequenceIdx++;
   const rrspIdx = inputs.rrsp > 0 ? sequenceIdx++ : -1;
   const fhsaIdx = inputs.fhsa > 0 ? sequenceIdx++ : -1;
+  const cppIdx = inputs.includeCPPEI !== 0 && results.cpp > 0 ? sequenceIdx++ : -1;
+  const eiIdx = inputs.includeCPPEI !== 0 && results.ei > 0 ? sequenceIdx++ : -1;
   const fedIdx = sequenceIdx++;
   const provIdx = sequenceIdx++;
 
@@ -161,6 +164,42 @@ function SummaryCard({ inputs, results, percentages }: SummaryCardProps) {
               onMouseLeave={handleMouseLeave}
             />
           )}
+          {inputs.includeCPPEI !== 0 && results.cpp > 0 && (
+            <motion.div 
+              layout initial={{ width: 0 }} 
+              animate={{ 
+                 width: `${cppPct}%`, 
+                 opacity: getOpacity('cpp'), 
+                 scale: hoveredItem === 'cpp' ? 1.08 : 1, 
+                 zIndex: hoveredItem === 'cpp' ? 40 : 10,
+                 filter: hoveredItem === 'cpp' ? 'brightness(1.2)' : 'brightness(1)',
+                 borderRadius: hoveredItem === 'cpp' ? '0.75rem' : '0px',
+                 boxShadow: hoveredItem === 'cpp' ? '0 10px 25px rgba(251,191,36,0.6)' : '0 0 15px rgba(251,191,36,0.3)'
+              }} 
+              transition={getBarTransition(cppIdx)} 
+              className="h-full bg-amber-500 border-l border-black/20 cursor-pointer origin-center" 
+              onMouseMove={(e) => handleMouseMove(e, 'CPP/QPP', `$${Math.round(results.cpp).toLocaleString()} (${cppPct.toFixed(1)}%) is deducted for ${provinceCode === 'QC' ? 'QPP' : 'CPP'} contributions.`, 'cpp')}
+              onMouseLeave={handleMouseLeave}
+            />
+          )}
+          {inputs.includeCPPEI !== 0 && results.ei > 0 && (
+            <motion.div 
+              layout initial={{ width: 0 }} 
+              animate={{ 
+                 width: `${eiPct}%`, 
+                 opacity: getOpacity('ei'), 
+                 scale: hoveredItem === 'ei' ? 1.08 : 1, 
+                 zIndex: hoveredItem === 'ei' ? 40 : 10,
+                 filter: hoveredItem === 'ei' ? 'brightness(1.2)' : 'brightness(1)',
+                 borderRadius: hoveredItem === 'ei' ? '0.75rem' : '0px',
+                 boxShadow: hoveredItem === 'ei' ? '0 10px 25px rgba(245,158,11,0.6)' : '0 0 15px rgba(245,158,11,0.3)'
+              }} 
+              transition={getBarTransition(eiIdx)} 
+              className="h-full bg-yellow-600 border-l border-black/20 cursor-pointer origin-center" 
+              onMouseMove={(e) => handleMouseMove(e, 'EI', `$${Math.round(results.ei).toLocaleString()} (${eiPct.toFixed(1)}%) is deducted for Employment Insurance.`, 'ei')}
+              onMouseLeave={handleMouseLeave}
+            />
+          )}
           <motion.div 
             layout initial={{ width: 0 }} 
             animate={{ 
@@ -239,6 +278,38 @@ function SummaryCard({ inputs, results, percentages }: SummaryCardProps) {
               </div>
               <p className="font-black text-xl text-white">${Math.round(inputs.fhsa).toLocaleString()}</p>
               <p className="font-medium text-white/40 text-sm">{fhsaPct.toFixed(1)}%</p>
+            </motion.div>
+          )}
+
+          {inputs.includeCPPEI !== 0 && results.cpp > 0 && (
+            <motion.div 
+               className="space-y-1 border-l border-white/10 pl-6 cursor-pointer transition-opacity duration-300"
+               initial={{ opacity: 0, y: 15 }} animate={{ opacity: getOpacity('cpp'), y: 0 }} transition={getLegendTransition(cppIdx)}
+               onMouseMove={(e) => handleMouseMove(e, 'CPP/QPP', `$${Math.round(results.cpp).toLocaleString()} (${cppPct.toFixed(1)}%) is deducted for ${provinceCode === 'QC' ? 'QPP' : 'CPP'} contributions.`, 'cpp')}
+               onMouseLeave={handleMouseLeave}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+                <span className="font-bold text-white/50 text-xs uppercase tracking-wider">CPP/QPP</span>
+              </div>
+              <p className="font-black text-xl text-white">${Math.round(results.cpp).toLocaleString()}</p>
+              <p className="font-medium text-white/40 text-sm">{cppPct.toFixed(1)}%</p>
+            </motion.div>
+          )}
+
+          {inputs.includeCPPEI !== 0 && results.ei > 0 && (
+            <motion.div 
+               className="space-y-1 border-l border-white/10 pl-6 cursor-pointer transition-opacity duration-300"
+               initial={{ opacity: 0, y: 15 }} animate={{ opacity: getOpacity('ei'), y: 0 }} transition={getLegendTransition(eiIdx)}
+               onMouseMove={(e) => handleMouseMove(e, 'EI', `$${Math.round(results.ei).toLocaleString()} (${eiPct.toFixed(1)}%) is deducted for Employment Insurance.`, 'ei')}
+               onMouseLeave={handleMouseLeave}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-600 shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
+                <span className="font-bold text-white/50 text-xs uppercase tracking-wider">EI</span>
+              </div>
+              <p className="font-black text-xl text-white">${Math.round(results.ei).toLocaleString()}</p>
+              <p className="font-medium text-white/40 text-sm">{eiPct.toFixed(1)}%</p>
             </motion.div>
           )}
 

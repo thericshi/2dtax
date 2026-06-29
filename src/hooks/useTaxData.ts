@@ -4,6 +4,8 @@ import { calculateTax, TaxInputs, ProvinceCode, TaxResult } from '../utils/TaxLo
 export interface Percentages {
   fedPct: number;
   provPct: number;
+  cppPct: number;
+  eiPct: number;
   rrspPct: number;
   fhsaPct: number;
   cashPct: number;
@@ -46,6 +48,8 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
     return {
       fedPct: (results.federal / safeIncome) * 100,
       provPct: (results.provincial / safeIncome) * 100,
+      cppPct: (results.cpp / safeIncome) * 100,
+      eiPct: (results.ei / safeIncome) * 100,
       rrspPct: (inputs.rrsp / safeIncome) * 100,
       fhsaPct: (inputs.fhsa / safeIncome) * 100,
       cashPct: (cashTakeHome / safeIncome) * 100,
@@ -64,9 +68,10 @@ export function useTaxData(inputs: TaxInputs, province: ProvinceCode) {
       let hasValue = false;
       const simInputs = { ...inputs };
       keys.forEach(k => {
-         if (simInputs[k] > 0) {
+         const val = simInputs[k];
+         if (typeof val === 'number' && val > 0) {
            hasValue = true;
-           simInputs[k] = 0;
+           (simInputs as any)[k] = 0;
          }
       });
       if (!hasValue) return 0;

@@ -87,6 +87,37 @@ function ControlsPanel({ inputs, updateInput, province, setProvince, onMobileEdi
         </div>
       </div>
 
+      {/* CPP / EI Toggle */}
+      <div className={`mb-8 transition-all duration-500 ${!province ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className="flex items-center justify-between bg-white/[0.03] rounded-xl px-5 py-3.5 border border-white/[0.06] backdrop-blur-sm">
+          <div className="flex flex-col">
+            <span className="text-sm font-bold text-white/80">Include CPP/QPP & EI</span>
+            <span className="text-[10px] font-medium text-white/30 mt-0.5 tracking-wide">
+              Employment insurance and pension contributions (default: on)
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              updateInput('includeCPPEI', inputs.includeCPPEI !== 0 ? 0 : 1);
+            }}
+            disabled={!province}
+            className={`relative w-14 h-7 rounded-full transition-all duration-300 flex items-center px-1 ${
+              inputs.includeCPPEI !== 0 
+                ? 'bg-emerald-500/50 shadow-[0_0_12px_rgba(52,211,153,0.2)]' 
+                : 'bg-white/10'
+            }`}
+          >
+            <motion.div 
+              layout
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              className={`w-5 h-5 rounded-full shadow-md ${
+                inputs.includeCPPEI !== 0 ? 'bg-emerald-400 ml-7' : 'bg-white/60 ml-0'
+              }`}
+            />
+          </button>
+        </div>
+      </div>
+
       <div className="relative">
         <AnimatePresence>
           {!province && (

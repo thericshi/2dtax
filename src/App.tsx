@@ -30,7 +30,8 @@ export default function App() {
     medicalExpenses: 0,
     tuition: 0,
     tuitionCarryForward: 0,
-    donations: 0
+    donations: 0,
+    includeCPPEI: 1
   });
 
   const updateInput = useCallback((key: keyof TaxInputs, value: number) => {
@@ -141,7 +142,7 @@ export default function App() {
              {/* Bottom/bg shows the charts */}
              <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6 opacity-60">
                 <TaxChart progressionData={progressionData} inputs={deferredInputs} results={results} />
-                <SummaryCard inputs={deferredInputs} results={results} percentages={percentages} />
+                <SummaryCard inputs={deferredInputs} results={results} percentages={percentages} provinceCode={province} />
              </div>
           </motion.div>
         )}
@@ -260,6 +261,7 @@ export default function App() {
                 inputs={deferredInputs} 
                 results={results} 
                 percentages={percentages} 
+                provinceCode={province}
               />
             </motion.div>
 

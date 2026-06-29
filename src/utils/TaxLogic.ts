@@ -13,11 +13,14 @@ export interface TaxInputs {
   tuition: number;
   tuitionCarryForward: number;
   donations: number;
+  includeCPPEI?: number;
 }
 
 export interface TaxResult {
   federal: number;
   provincial: number;
+  cpp: number;
+  ei: number;
   totalTax: number;
   takeHome: number;
   effectiveRate: number;
@@ -74,6 +77,8 @@ const calculateCoreTax = (inputs: TaxInputs, provinceCode: ProvinceCode): Omit<T
     rrsp = 0, fhsa = 0, movingExpenses = 0, medicalExpenses = 0, tuition = 0, tuitionCarryForward = 0, donations = 0
   } = inputs;
 
+  const includeCPPEI = inputs.includeCPPEI !== 0;
+  
   const totalGrossIncome = employment + capitalGains + eligibleDividends + ineligibleDividends;
   const netCapitalGains = Math.max(0, capitalGains - capitalLoss);
 
@@ -141,14 +146,38 @@ const calculateCoreTax = (inputs: TaxInputs, provinceCode: ProvinceCode): Omit<T
     }
   }
 
-  const totalTax = fedTax + provTax;
-  const effectiveRate = totalGrossIncome > 0 ? (totalTax / totalGrossIncome) * 100 : 0;
+  const incomeTax = fedTax + provTax;
+
+  // CPP / QPP & EI calculations
+  let cpp = 0;
+  let ei = 0;
+  if (includeCPPEI && employment > 0) {
+    const YMPE = 71300;
+    const YAMPE = 81200;
+    const basicExemption = 3500;
+    const cppRate = provinceCode === 'QC' ? 0.0640 : 0.0595;
+    const cpp2Rate = 0.04;
+    
+    const pensionableEarnings = Math.max(0, employment - basicExemption);
+    const cppBase = Math.min(pensionableEarnings, YMPE - basicExemption) * cppRate;
+    const cpp2 = Math.max(0, Math.min(employment - YMPE, YAMPE - YMPE)) * cpp2Rate;
+    cpp = cppBase + cpp2;
+    
+    const MIE = 65700;
+    const eiRate = provinceCode === 'QC' ? 0.0132 : 0.0164;
+    ei = Math.min(employment, MIE) * eiRate;
+  }
+
+  const totalDeductionsFromIncome = incomeTax + cpp + ei;
+  const effectiveRate = totalGrossIncome > 0 ? (incomeTax / totalGrossIncome) * 100 : 0;
 
   return {
     federal: fedTax,
     provincial: provTax,
-    totalTax: totalTax,
-    takeHome: totalGrossIncome - totalTax,
+    cpp,
+    ei,
+    totalTax: incomeTax,
+    takeHome: totalGrossIncome - totalDeductionsFromIncome,
     effectiveRate: isNaN(effectiveRate) ? 0 : effectiveRate,
     totalGrossIncome,
     taxableIncome: netIncomeForTax
